@@ -16,7 +16,7 @@ export default async function HomePage() {
   }))
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
         <Dashboard initialVehicles={vehicleRows} />
       </div>
     </div>

@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { AppNav } from '@/components/AppNav'
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#111827',
+  themeColor: '#ffffff',
 }
 
 export const metadata: Metadata = {
@@ -29,7 +30,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AppNav />
+        {children}
+      </body>
     </html>
   )
 }

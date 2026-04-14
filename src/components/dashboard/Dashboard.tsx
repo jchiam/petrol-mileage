@@ -7,6 +7,7 @@ import { KpiTiles } from './KpiTiles'
 import { ForecastCard } from './ForecastCard'
 import { FillsTable } from './FillsTable'
 import { CompareTab } from './CompareTab'
+import { VehicleSelect } from '../VehicleSelect'
 
 // Charts use Recharts which is browser-only
 const Charts = dynamic(() => import('./Charts'), { ssr: false })
@@ -65,35 +66,22 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
 
   return (
     <div>
-      {/* Header */}
+      {/* Vehicle switcher + action */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Petrol Tracker</h1>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-600 shrink-0">Vehicle</span>
+          <VehicleSelect
+            vehicles={initialVehicles}
+            value={selectedVehicleId}
+            onChange={handleVehicleChange}
+          />
+        </div>
         <a
           href="/log"
-          className="h-9 px-4 bg-gray-900 text-white rounded-lg text-sm font-medium flex items-center hover:bg-gray-700 transition-colors"
+          className="h-9 px-4 bg-gray-900 text-white rounded-lg text-sm font-medium flex items-center hover:bg-gray-700 transition-colors shrink-0"
         >
           Log fill-up &rarr;
         </a>
-      </div>
-
-      {/* Vehicle switcher */}
-      <div className="flex items-center gap-3 mb-6">
-        <label htmlFor="vehicle-select" className="text-sm font-medium text-gray-600 shrink-0">
-          Vehicle
-        </label>
-        <select
-          id="vehicle-select"
-          value={selectedVehicleId ?? ''}
-          onChange={(e) => handleVehicleChange(parseInt(e.target.value, 10))}
-          className="h-9 pl-3 pr-8 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-gray-900"
-        >
-          {initialVehicles.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.name}
-              {!v.isActive ? ' (retired)' : ''}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* Tabs */}
