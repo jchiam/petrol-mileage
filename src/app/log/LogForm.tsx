@@ -170,7 +170,7 @@ export function LogForm({ initialVehicles }: LogFormProps) {
           value={date}
           onChange={(e) => setDate(e.target.value)}
           required
-          className="h-14 px-4 text-lg border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
+          className="h-14 px-4 text-lg text-gray-900 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
         />
       </div>
 
@@ -189,7 +189,7 @@ export function LogForm({ initialVehicles }: LogFormProps) {
             onChange={(e) => setPetrolL(e.target.value)}
             required
             autoComplete="off"
-            className="w-full h-14 px-4 pr-10 text-lg border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
+            className="w-full h-14 px-4 pr-10 text-lg text-gray-900 placeholder:text-gray-400 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium pointer-events-none">
             L
@@ -212,7 +212,7 @@ export function LogForm({ initialVehicles }: LogFormProps) {
             onChange={(e) => setMileageKm(e.target.value)}
             required
             autoComplete="off"
-            className="w-full h-14 px-4 pr-14 text-lg border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
+            className="w-full h-14 px-4 pr-14 text-lg text-gray-900 placeholder:text-gray-400 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium pointer-events-none">
             km
@@ -238,7 +238,7 @@ export function LogForm({ initialVehicles }: LogFormProps) {
             onChange={(e) => setCost(e.target.value)}
             required
             autoComplete="off"
-            className="w-full h-14 pl-8 pr-4 text-lg border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
+            className="w-full h-14 pl-8 pr-4 text-lg text-gray-900 placeholder:text-gray-400 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
           />
         </div>
       </div>
@@ -276,12 +276,20 @@ function ConfirmationCard({ data, onBack }: { data: ConfirmedFill; onBack: () =>
         <MetricTile label="$/L" value={`$${round(data.costPerL, 2)}`} />
       </div>
 
-      <button
-        onClick={onBack}
-        className="h-14 border-2 border-gray-200 rounded-xl text-lg font-medium text-gray-700 active:bg-gray-50 transition-colors"
-      >
-        &larr; Log another
-      </button>
+      <div className="flex flex-col gap-3">
+        <button
+          onClick={onBack}
+          className="h-14 bg-gray-900 text-white rounded-xl text-lg font-semibold active:bg-gray-700 transition-colors"
+        >
+          Log another
+        </button>
+        <a
+          href="/"
+          className="h-12 flex items-center justify-center rounded-xl text-sm font-medium text-gray-600 border-2 border-gray-200 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+        >
+          Back to dashboard
+        </a>
+      </div>
     </div>
   )
 }

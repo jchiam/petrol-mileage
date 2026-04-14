@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from 'react'
 import { parseImportFile } from '@/lib/import-parser'
 import type { ParsedRow, ParseResult } from '@/lib/import-parser'
 import { PreviewTable } from './PreviewTable'
+import { VehicleSelect } from '@/components/VehicleSelect'
 
 interface VehicleOption {
   id: number
@@ -17,6 +18,66 @@ interface DoneResult {
   inserted: number
   skipped: number
   errors: { index: number; error: string }[]
+}
+
+// ── Isolated component so its own state never interferes with ImportWizard ──
+
+function CreateVehicleForm() {
+  const [name, setName] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleCreate() {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    setCreating(true)
+    setError('')
+    try {
+      const res = await fetch('/api/vehicles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmed }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error ?? 'Failed to create vehicle')
+        return
+      }
+      window.location.reload()
+    } catch {
+      setError('Network error — please try again')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-sm">
+      <p className="text-sm font-medium text-gray-700 mb-1">No vehicles yet</p>
+      <p className="text-xs text-gray-500 mb-4">
+        Create a vehicle first, then come back to import fill-ups.
+      </p>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder="Vehicle name (e.g. Honda City)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          type="button"
+          onClick={handleCreate}
+          disabled={!name.trim() || creating}
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {creating ? 'Creating…' : 'Create'}
+        </button>
+      </div>
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+    </div>
+  )
 }
 
 export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
@@ -102,7 +163,7 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
   // ── Submit ──────────────────────────────────────────────────────────────────
 
   const handleSubmit = useCallback(async () => {
-    if (!parseResult || selected.size === 0) return
+    if (!parseResult || selected.size === 0 || !vehicleId) return
     setSubmitting(true)
     setSubmitError('')
 
@@ -150,6 +211,12 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }, [])
 
+  // ── Empty state: no vehicles ────────────────────────────────────────────────
+
+  if (vehicles.length === 0) {
+    return <CreateVehicleForm />
+  }
+
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
@@ -160,17 +227,11 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Import into vehicle
           </label>
-          <select
-            value={vehicleId}
-            onChange={(e) => setVehicleId(parseInt(e.target.value, 10))}
-            className="block w-full sm:w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {vehicles.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}{!v.isActive ? ' (retired)' : ''}
-              </option>
-            ))}
-          </select>
+          <VehicleSelect
+            vehicles={vehicles}
+            value={vehicleId || null}
+            onChange={setVehicleId}
+          />
         </div>
       )}
 
