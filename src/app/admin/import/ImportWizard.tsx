@@ -21,7 +21,7 @@ interface DoneResult {
 
 // ── Isolated component so its own state never interferes with ImportWizard ──
 
-function CreateVehicleForm() {
+function CreateVehicleForm({ onCancel }: { onCancel?: () => void }) {
   const [name, setName] = useState('')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
@@ -52,9 +52,9 @@ function CreateVehicleForm() {
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-sm">
-      <p className="text-sm font-medium text-gray-700 mb-1">No vehicles yet</p>
+      <p className="text-sm font-medium text-gray-700 mb-1">Add a vehicle</p>
       <p className="text-xs text-gray-500 mb-4">
-        Create a vehicle first, then come back to import fill-ups.
+        Create the vehicle first, then import fill-ups for it.
       </p>
       <div className="flex gap-2">
         <input
@@ -75,6 +75,15 @@ function CreateVehicleForm() {
         </button>
       </div>
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="mt-3 text-xs text-gray-400 hover:text-gray-600 underline"
+        >
+          Cancel
+        </button>
+      )}
     </div>
   )
 }
@@ -84,8 +93,10 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
   const [vehicleId, setVehicleId] = useState<number>(
     vehicles.find((v) => v.isActive)?.id ?? vehicles[0]?.id ?? 0,
   )
+  const [showAddVehicle, setShowAddVehicle] = useState(false)
   const [fileName, setFileName] = useState('')
-  const [parseResult, setParseResult] = useState<ParseResult | null>(null)
+  const [parseResults, setParseResults] = useState<ParseResult[] | null>(null)
+  const [sheetIdx, setSheetIdx] = useState(0)
   const [parseError, setParseError] = useState('')
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [parsing, setParsing] = useState(false)
@@ -98,7 +109,8 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
 
   const handleFile = useCallback(async (file: File) => {
     setParseError('')
-    setParseResult(null)
+    setParseResults(null)
+    setSheetIdx(0)
     setSelected(new Set())
     setParsing(true)
 
@@ -113,12 +125,14 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
         return
       }
 
+      const sheets = outcome as ParseResult[]
       setFileName(file.name)
-      setParseResult(outcome)
+      setParseResults(sheets)
+      setSheetIdx(0)
 
-      // Pre-select all valid rows
+      // Pre-select all valid rows in the first sheet
       const initialSelected = new Set(
-        (outcome as ParseResult).rows.filter((r: ParsedRow) => r.valid).map((r: ParsedRow) => r.sheetRow),
+        sheets[0].rows.filter((r: ParsedRow) => r.valid).map((r: ParsedRow) => r.sheetRow),
       )
       setSelected(initialSelected)
       setStep('preview')
@@ -159,24 +173,26 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
 
   const selectAll = useCallback(
     (value: boolean) => {
-      if (!parseResult) return
+      const sheet = parseResults?.[sheetIdx]
+      if (!sheet) return
       if (value) {
-        setSelected(new Set(parseResult.rows.filter((r) => r.valid).map((r) => r.sheetRow)))
+        setSelected(new Set(sheet.rows.filter((r) => r.valid).map((r) => r.sheetRow)))
       } else {
         setSelected(new Set())
       }
     },
-    [parseResult],
+    [parseResults, sheetIdx],
   )
 
   // ── Submit ──────────────────────────────────────────────────────────────────
 
   const handleSubmit = useCallback(async () => {
-    if (!parseResult || selected.size === 0 || !vehicleId) return
+    const sheet = parseResults?.[sheetIdx]
+    if (!sheet || selected.size === 0 || !vehicleId) return
     setSubmitting(true)
     setSubmitError('')
 
-    const rowMap = new Map<number, ParsedRow>(parseResult.rows.map((r) => [r.sheetRow, r]))
+    const rowMap = new Map<number, ParsedRow>(sheet.rows.map((r) => [r.sheetRow, r]))
     const toInsert = [...selected]
       .map((sr) => rowMap.get(sr))
       .filter((r): r is ParsedRow => r != null && r.valid)
@@ -205,14 +221,15 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
     } finally {
       setSubmitting(false)
     }
-  }, [parseResult, selected, vehicleId])
+  }, [parseResults, sheetIdx, selected, vehicleId])
 
   // ── Reset ───────────────────────────────────────────────────────────────────
 
   const reset = useCallback(() => {
     setStep('upload')
     setFileName('')
-    setParseResult(null)
+    setParseResults(null)
+    setSheetIdx(0)
     setParseError('')
     setParsing(false)
     setSelected(new Set())
@@ -226,6 +243,8 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
   if (vehicles.length === 0) {
     return <CreateVehicleForm />
   }
+
+  const sheet = parseResults?.[sheetIdx] ?? null
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -242,6 +261,20 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
             value={vehicleId || null}
             onChange={setVehicleId}
           />
+          {!showAddVehicle && (
+            <button
+              type="button"
+              onClick={() => setShowAddVehicle(true)}
+              className="mt-3 text-xs text-blue-600 hover:text-blue-800 font-medium"
+            >
+              + Add vehicle
+            </button>
+          )}
+          {showAddVehicle && (
+            <div className="mt-4">
+              <CreateVehicleForm onCancel={() => setShowAddVehicle(false)} />
+            </div>
+          )}
         </div>
       )}
 
@@ -277,18 +310,35 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
       )}
 
       {/* Step 2: Preview */}
-      {step === 'preview' && parseResult && (
+      {step === 'preview' && sheet && (
         <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
               <p className="font-medium text-gray-900">{fileName}</p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Sheet: <span className="font-mono">{parseResult.sheetName}</span>
-                {' · '}Detected columns:{' '}
-                <span className="font-mono">{parseResult.detectedColumns.pumpDate}</span>,{' '}
-                <span className="font-mono">{parseResult.detectedColumns.petrolL}</span>,{' '}
-                <span className="font-mono">{parseResult.detectedColumns.mileageKm}</span>,{' '}
-                <span className="font-mono">{parseResult.detectedColumns.cost}</span>
+              {parseResults && parseResults.length > 1 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {parseResults.map((s, i) => (
+                    <button
+                      key={s.sheetName}
+                      type="button"
+                      onClick={() => {
+                        setSheetIdx(i)
+                        setSelected(new Set(parseResults[i].rows.filter((r) => r.valid).map((r) => r.sheetRow)))
+                      }}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${i === sheetIdx ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    >
+                      {s.sheetName}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                {(!parseResults || parseResults.length === 1) && <>Sheet: <span className="font-mono">{sheet.sheetName}</span>{' · '}</>}
+                Detected columns:{' '}
+                <span className="font-mono">{sheet.detectedColumns.pumpDate}</span>,{' '}
+                <span className="font-mono">{sheet.detectedColumns.petrolL}</span>,{' '}
+                <span className="font-mono">{sheet.detectedColumns.mileageKm}</span>,{' '}
+                <span className="font-mono">{sheet.detectedColumns.cost}</span>
               </p>
             </div>
             <button
@@ -301,7 +351,7 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
           </div>
 
           <PreviewTable
-            rows={parseResult.rows}
+            rows={sheet.rows}
             selected={selected}
             onToggle={toggleRow}
             onSelectAll={selectAll}

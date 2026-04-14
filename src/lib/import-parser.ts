@@ -43,7 +43,7 @@ export interface ParseError {
   error: string
 }
 
-export type ParseOutcome = ParseResult | ParseError
+export type ParseOutcome = ParseResult[] | ParseError
 
 // ─── Column name aliases ──────────────────────────────────────────────────────
 
@@ -226,8 +226,8 @@ function worksheetToArrays(worksheet: ExcelJS.Worksheet): unknown[][] {
 // ─── Main parse function ──────────────────────────────────────────────────────
 
 /**
- * Parse an uploaded file (Buffer) and return structured rows.
- * Tries each sheet in order; uses the first sheet with a recognisable header.
+ * Parse an uploaded file (Buffer) and return structured rows for all sheets
+ * that contain a recognisable header (Pump Date / Petrol / Mileage / Cost).
  */
 export async function parseImportFile(arrayBuffer: ArrayBuffer, isCsv: boolean): Promise<ParseOutcome> {
   const workbook = new ExcelJS.Workbook()
@@ -246,6 +246,8 @@ export async function parseImportFile(arrayBuffer: ArrayBuffer, isCsv: boolean):
   } catch {
     return { error: 'Could not read file. Make sure it is a valid .xlsx or .csv.' }
   }
+
+  const results: ParseResult[] = []
 
   for (const worksheet of workbook.worksheets) {
     const raw = worksheetToArrays(worksheet)
@@ -324,7 +326,7 @@ export async function parseImportFile(arrayBuffer: ArrayBuffer, isCsv: boolean):
 
     if (parsed.length === 0) continue
 
-    return {
+    results.push({
       sheetName: worksheet.name,
       rows: parsed,
       detectedColumns: {
@@ -333,8 +335,12 @@ export async function parseImportFile(arrayBuffer: ArrayBuffer, isCsv: boolean):
         mileageKm: mileageCol.name,
         cost:      costCol.name,
       },
-    }
+    })
   }
 
-  return { error: 'No recognisable data sheet found. Expected columns: Pump Date, Petrol, Mileage, Cost.' }
+  if (results.length === 0) {
+    return { error: 'No recognisable data sheet found. Expected columns: Pump Date, Petrol, Mileage, Cost.' }
+  }
+
+  return results
 }
