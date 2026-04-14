@@ -9,7 +9,9 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 export const vehicles = pgTable('vehicles', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
@@ -39,6 +41,9 @@ export const fillUps = pgTable(
   },
   (table) => [
     index('idx_fillups_vehicle_date').on(table.vehicleId, table.pumpDate),
+    uniqueIndex('uq_fillups_active')
+      .on(table.vehicleId, table.pumpDate, table.petrolL, table.mileageKm, table.cost)
+      .where(sql`${table.voidedAt} IS NULL`),
   ]
 )
 

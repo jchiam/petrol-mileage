@@ -74,14 +74,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'no valid rows to insert', errors }, { status: 400 })
   }
 
-  // Insert in batches of 100
+  // Insert in batches of 100, skipping rows that already exist
   let inserted = 0
+  let duplicates = 0
   const batchSize = 100
   for (let i = 0; i < validRows.length; i += batchSize) {
     const batch = validRows.slice(i, i + batchSize)
-    await db.insert(fillUps).values(batch)
-    inserted += batch.length
+    const result = await db.insert(fillUps).values(batch).onConflictDoNothing().returning({ id: fillUps.id })
+    inserted += result.length
+    duplicates += batch.length - result.length
   }
 
-  return NextResponse.json({ inserted, skipped: errors.length, errors })
+  return NextResponse.json({ inserted, skipped: errors.length + duplicates, errors })
 }
