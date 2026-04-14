@@ -146,5 +146,5 @@ To restore:
 - [x] Step 4 — Mobile entry (`/log`)
 - [x] Step 5 — Dashboard (`/`)
 - [x] Step 6 — Import page (`/admin/import`)
-- [ ] Step 7 — PWA polish (icons, manifest icons, iOS meta)
+- [x] Step 7 — PWA polish (icons, manifest icons, iOS meta)
 - [ ] Step 8 — Smoke test on NAS

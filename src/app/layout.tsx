@@ -11,6 +11,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'Petrol Tracker',
   description: 'Track petrol fill-ups',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/icons/apple-touch-icon.png',
+  },
   appleWebApp: {
     capable: true,
     title: 'Petrol',
