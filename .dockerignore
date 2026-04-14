@@ -1,0 +1,23 @@
+# Dependencies — re-installed inside builder stage
+node_modules
+
+# Next.js build output (built inside container)
+.next
+out
+
+# Dev environment overrides
+.env
+.env.local
+.env.*.local
+docker-compose.dev.yml
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Backups (runtime, not source)
+backups/
+
+# Source maps / debug
+npm-debug.log*
