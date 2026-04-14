@@ -28,7 +28,7 @@ Runs on a UGREEN NAS via Docker Compose, accessible over Tailscale only.
 |---|---|
 | `/` | Dashboard — KPI tiles, trend charts, forecast card, recent fills table, vehicle comparison |
 | `/log` | Mobile entry — thumb-friendly form, bookmarkable as PWA |
-| `/admin/import` | Bulk import from `.xlsx` / `.csv` (Step 6, not yet built) |
+| `/admin/import` | Bulk import from `.xlsx` / `.csv` — drag-drop, auto-detect sheet, per-row preview |
 
 ---
 
@@ -145,6 +145,6 @@ To restore:
 - [x] Step 3 — API routes (all endpoints, stats/forecast/anomaly logic, unit tests)
 - [x] Step 4 — Mobile entry (`/log`)
 - [x] Step 5 — Dashboard (`/`)
-- [ ] Step 6 — Import page (`/admin/import`)
+- [x] Step 6 — Import page (`/admin/import`)
 - [ ] Step 7 — PWA polish (icons, manifest icons, iOS meta)
 - [ ] Step 8 — Smoke test on NAS
