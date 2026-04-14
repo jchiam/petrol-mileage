@@ -9,7 +9,8 @@
  * - First data row may contain junk — surfaced in preview so user can deselect
  */
 
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
+import { Readable } from 'stream'
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -80,23 +81,41 @@ function findColumn(
 }
 
 /**
- * Convert an Excel date serial or a string date to YYYY-MM-DD.
+ * Convert an Excel date serial (number) to YYYY-MM-DD.
+ * Excel epoch is Jan 1, 1900 (serial 1). Excel has a known leap-year bug
+ * where serial 60 = Feb 29, 1900 (doesn't exist) — serials > 60 are shifted
+ * by 1 day relative to real dates.
+ */
+function excelSerialToDate(serial: number): string {
+  const adjusted = serial > 60 ? serial - 1 : serial
+  const epoch = Date.UTC(1899, 11, 31) // Dec 31, 1899
+  const date = new Date(epoch + adjusted * 86_400_000)
+  const y = date.getUTCFullYear()
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const d = String(date.getUTCDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+/**
+ * Convert a cell value to YYYY-MM-DD.
+ * Handles Date objects, Excel date serials, and common string formats.
  * Returns '' on failure.
  */
 function toDateString(raw: unknown): string {
   if (raw == null || raw === '') return ''
 
+  // Date object returned by exceljs for date-formatted cells
+  if (raw instanceof Date) {
+    if (isNaN(raw.getTime())) return ''
+    const y = raw.getFullYear()
+    const m = String(raw.getMonth() + 1).padStart(2, '0')
+    const d = String(raw.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
   // Excel numeric date serial
   if (typeof raw === 'number') {
-    try {
-      const d = XLSX.SSF.parse_date_code(raw)
-      if (!d) return ''
-      const mm = String(d.m).padStart(2, '0')
-      const dd = String(d.d).padStart(2, '0')
-      return `${d.y}-${mm}-${dd}`
-    } catch {
-      return ''
-    }
+    return excelSerialToDate(raw)
   }
 
   const s = String(raw).trim()
@@ -112,17 +131,10 @@ function toDateString(raw: unknown): string {
     return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
   }
 
-  // MM/DD/YYYY
-  const mdy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/)
-  if (mdy) {
-    // Ambiguous — already handled above; skip
-    return ''
-  }
-
   // Try native Date parse as last resort
-  const d = new Date(s)
-  if (!isNaN(d.getTime())) {
-    return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' })
+  const parsed = new Date(s)
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' })
   }
 
   return ''
@@ -137,6 +149,31 @@ function toNumber(raw: unknown): number | null {
   if (s === '' || s === '-' || s.startsWith('#')) return null
   const n = parseFloat(s.replace(/,/g, ''))
   return isNaN(n) ? null : n
+}
+
+/**
+ * Resolve an exceljs cell value to a plain JS primitive.
+ * Handles formula results, rich text, and hyperlink objects.
+ */
+function resolveCellValue(value: unknown): unknown {
+  if (value == null) return null
+  if (value instanceof Date) return value
+  if (typeof value !== 'object') return value
+
+  const obj = value as Record<string, unknown>
+
+  // Formula cell: { formula, result, ... }
+  if ('result' in obj) return resolveCellValue(obj.result)
+
+  // Rich text: { richText: [{ text, font }, ...] }
+  if ('richText' in obj && Array.isArray(obj.richText)) {
+    return (obj.richText as Array<{ text: string }>).map((r) => r.text).join('')
+  }
+
+  // Hyperlink: { text, hyperlink }
+  if ('text' in obj) return obj.text
+
+  return null
 }
 
 /**
@@ -171,29 +208,47 @@ function findHeaderRow(
   return null
 }
 
+/**
+ * Extract all non-empty rows from an exceljs worksheet as an array-of-arrays.
+ * Row values are 1-indexed in exceljs; we convert to 0-indexed.
+ */
+function worksheetToArrays(worksheet: ExcelJS.Worksheet): unknown[][] {
+  const result: unknown[][] = []
+  worksheet.eachRow({ includeEmpty: false }, (row) => {
+    const raw = row.values as unknown[]
+    // row.values is 1-indexed (index 0 = undefined); slice(1) → 0-indexed
+    const arr = raw.slice(1).map((v) => (v === undefined ? null : resolveCellValue(v)))
+    result.push(arr)
+  })
+  return result
+}
+
 // ─── Main parse function ──────────────────────────────────────────────────────
 
 /**
- * Parse an uploaded file (ArrayBuffer) and return structured rows.
+ * Parse an uploaded file (Buffer) and return structured rows.
  * Tries each sheet in order; uses the first sheet with a recognisable header.
  */
-export function parseImportFile(buffer: ArrayBuffer): ParseOutcome {
-  let workbook: XLSX.WorkBook
+export async function parseImportFile(arrayBuffer: ArrayBuffer, isCsv: boolean): Promise<ParseOutcome> {
+  const workbook = new ExcelJS.Workbook()
+  const buf = Buffer.from(arrayBuffer)
+
   try {
-    workbook = XLSX.read(buffer, { type: 'array', cellDates: false })
+    if (isCsv) {
+      const stream = new Readable()
+      stream.push(buf as Uint8Array)
+      stream.push(null)
+      await workbook.csv.read(stream)
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await workbook.xlsx.load(buf as any)
+    }
   } catch {
     return { error: 'Could not read file. Make sure it is a valid .xlsx or .csv.' }
   }
 
-  // Try each sheet; use first that has a recognised header
-  for (const sheetName of workbook.SheetNames) {
-    const sheet = workbook.Sheets[sheetName]
-    // Convert to array-of-arrays (raw values, no header row consumed)
-    const raw: unknown[][] = XLSX.utils.sheet_to_json(sheet, {
-      header: 1,
-      defval: null,
-      blankrows: false,
-    })
+  for (const worksheet of workbook.worksheets) {
+    const raw = worksheetToArrays(worksheet)
 
     if (raw.length < 2) continue
 
@@ -270,7 +325,7 @@ export function parseImportFile(buffer: ArrayBuffer): ParseOutcome {
     if (parsed.length === 0) continue
 
     return {
-      sheetName,
+      sheetName: worksheet.name,
       rows: parsed,
       detectedColumns: {
         pumpDate:  dateCol.name,

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { parseImportFile } from '@/lib/import-parser'
 import type { ParsedRow, ParseResult } from '@/lib/import-parser'
 import { PreviewTable } from './PreviewTable'
 import { VehicleSelect } from '@/components/VehicleSelect'
@@ -89,6 +88,7 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
   const [parseResult, setParseResult] = useState<ParseResult | null>(null)
   const [parseError, setParseError] = useState('')
   const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [parsing, setParsing] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [doneResult, setDoneResult] = useState<DoneResult | null>(null)
@@ -100,24 +100,33 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
     setParseError('')
     setParseResult(null)
     setSelected(new Set())
+    setParsing(true)
 
-    const buffer = await file.arrayBuffer()
-    const outcome = parseImportFile(buffer)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/admin/parse-import', { method: 'POST', body: formData })
+      const outcome = await res.json()
 
-    if ('error' in outcome) {
-      setParseError(outcome.error)
-      return
+      if ('error' in outcome) {
+        setParseError(outcome.error)
+        return
+      }
+
+      setFileName(file.name)
+      setParseResult(outcome)
+
+      // Pre-select all valid rows
+      const initialSelected = new Set(
+        (outcome as ParseResult).rows.filter((r: ParsedRow) => r.valid).map((r: ParsedRow) => r.sheetRow),
+      )
+      setSelected(initialSelected)
+      setStep('preview')
+    } catch {
+      setParseError('Failed to parse file — please try again')
+    } finally {
+      setParsing(false)
     }
-
-    setFileName(file.name)
-    setParseResult(outcome)
-
-    // Pre-select all valid rows
-    const initialSelected = new Set(
-      outcome.rows.filter((r) => r.valid).map((r) => r.sheetRow),
-    )
-    setSelected(initialSelected)
-    setStep('preview')
   }, [])
 
   const onFileChange = useCallback(
@@ -205,6 +214,7 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
     setFileName('')
     setParseResult(null)
     setParseError('')
+    setParsing(false)
     setSelected(new Set())
     setSubmitError('')
     setDoneResult(null)
@@ -239,15 +249,19 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
       {step === 'upload' && (
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div
-            onDrop={onDrop}
+            onDrop={parsing ? undefined : onDrop}
             onDragOver={(e) => e.preventDefault()}
-            onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center cursor-pointer hover:border-blue-400 transition-colors"
+            onClick={() => !parsing && fileInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-lg p-10 text-center transition-colors ${parsing ? 'border-blue-300 cursor-wait' : 'border-gray-300 cursor-pointer hover:border-blue-400'}`}
           >
-            <p className="text-gray-500 text-sm">
-              Drag & drop an <span className="font-medium">.xlsx</span> or{' '}
-              <span className="font-medium">.csv</span> file here, or click to browse
-            </p>
+            {parsing ? (
+              <p className="text-blue-500 text-sm">Parsing file…</p>
+            ) : (
+              <p className="text-gray-500 text-sm">
+                Drag & drop an <span className="font-medium">.xlsx</span> or{' '}
+                <span className="font-medium">.csv</span> file here, or click to browse
+              </p>
+            )}
             <input
               ref={fileInputRef}
               type="file"
