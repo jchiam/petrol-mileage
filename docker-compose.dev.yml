@@ -1,0 +1,12 @@
+# Local development override — DO NOT use on the NAS.
+# Exposes the Postgres port so `npm run dev` on the host can reach it.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up db -d
+#   npm run db:migrate
+#   npm run dev
+
+services:
+  db:
+    ports:
+      - "127.0.0.1:5432:5432"
