@@ -135,16 +135,3 @@ To restore:
 ```bash
 ./scripts/restore.sh /path/to/backup.sql.gz
 ```
-
----
-
-## Build order (progress)
-
-- [x] Step 1 — Infrastructure (Docker Compose, Dockerfile, backup sidecar)
-- [x] Step 2 — Database layer (Drizzle schema, migrations, connection helper)
-- [x] Step 3 — API routes (all endpoints, stats/forecast/anomaly logic, unit tests)
-- [x] Step 4 — Mobile entry (`/log`)
-- [x] Step 5 — Dashboard (`/`)
-- [x] Step 6 — Import page (`/admin/import`)
-- [x] Step 7 — PWA polish (icons, manifest icons, iOS meta)
-- [ ] Step 8 — Smoke test on NAS
