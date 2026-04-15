@@ -70,7 +70,12 @@ function CreateVehicleForm({
         setError(data.error ?? 'Failed to create vehicle');
         return;
       }
-      onCreated?.({ id: data.id, name: data.name, isActive: data.isActive });
+      onCreated?.({
+        id: data.id,
+        name: data.name,
+        isActive: data.isActive,
+        isCurrent: data.isCurrent ?? false,
+      });
     } catch {
       setError('Network error — please try again');
     } finally {
