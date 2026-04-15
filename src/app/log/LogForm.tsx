@@ -143,13 +143,13 @@ export function LogForm({ currentVehicle }: LogFormProps) {
         <div className="relative">
           <input
             id="log-petrol"
-            type="text"
-            inputMode="decimal"
+            type="number"
+            step="any"
+            min="0"
             placeholder="0.000"
             value={petrolL}
             onChange={(e) => setPetrolL(e.target.value)}
             required
-            autoComplete="off"
             className="w-full h-14 px-4 pr-10 text-lg text-gray-900 placeholder:text-gray-500 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
@@ -166,13 +166,13 @@ export function LogForm({ currentVehicle }: LogFormProps) {
         <div className="relative">
           <input
             id="log-mileage"
-            type="text"
-            inputMode="decimal"
+            type="number"
+            step="any"
+            min="0"
             placeholder="0.0"
             value={mileageKm}
             onChange={(e) => setMileageKm(e.target.value)}
             required
-            autoComplete="off"
             className="w-full h-14 px-4 pr-14 text-lg text-gray-900 placeholder:text-gray-500 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
@@ -192,13 +192,13 @@ export function LogForm({ currentVehicle }: LogFormProps) {
           </span>
           <input
             id="log-cost"
-            type="text"
-            inputMode="decimal"
+            type="number"
+            step="any"
+            min="0"
             placeholder="0.00"
             value={cost}
             onChange={(e) => setCost(e.target.value)}
             required
-            autoComplete="off"
             className="w-full h-14 pl-8 pr-4 text-lg text-gray-900 placeholder:text-gray-500 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
           />
         </div>
