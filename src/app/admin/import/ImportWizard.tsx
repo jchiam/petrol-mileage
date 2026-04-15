@@ -23,7 +23,13 @@ interface DoneResult {
 
 const inputCls = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
 
-function CreateVehicleForm({ onCancel }: { onCancel?: () => void }) {
+function CreateVehicleForm({
+  onCancel,
+  onCreated,
+}: {
+  onCancel?: () => void
+  onCreated?: (vehicle: VehicleOption) => void
+}) {
   const [name, setName]   = useState('')
   const [make, setMake]   = useState('')
   const [model, setModel] = useState('')
@@ -54,12 +60,12 @@ function CreateVehicleForm({ onCancel }: { onCancel?: () => void }) {
           plate: plate.trim() || undefined,
         }),
       })
+      const data = await res.json()
       if (!res.ok) {
-        const data = await res.json()
         setError(data.error ?? 'Failed to create vehicle')
         return
       }
-      window.location.reload()
+      onCreated?.({ id: data.id, name: data.name, isActive: data.isActive })
     } catch {
       setError('Network error — please try again')
     } finally {
@@ -143,12 +149,19 @@ function CreateVehicleForm({ onCancel }: { onCancel?: () => void }) {
   )
 }
 
-export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
+export function ImportWizard({ vehicles: initialVehicles }: { vehicles: VehicleOption[] }) {
+  const [localVehicles, setLocalVehicles] = useState(initialVehicles)
   const [step, setStep] = useState<Step>('upload')
   const [vehicleId, setVehicleId] = useState<number>(
-    vehicles.find((v) => v.isActive)?.id ?? vehicles[0]?.id ?? 0,
+    initialVehicles.find((v) => v.isActive)?.id ?? initialVehicles[0]?.id ?? 0,
   )
   const [showAddVehicle, setShowAddVehicle] = useState(false)
+
+  const handleVehicleCreated = useCallback((vehicle: VehicleOption) => {
+    setLocalVehicles((prev) => [...prev, vehicle])
+    setVehicleId(vehicle.id)
+    setShowAddVehicle(false)
+  }, [])
   const [fileName, setFileName] = useState('')
   const [parseResults, setParseResults] = useState<ParseResult[] | null>(null)
   const [sheetIdx, setSheetIdx] = useState(0)
@@ -337,8 +350,8 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
 
   // ── Empty state: no vehicles ────────────────────────────────────────────────
 
-  if (vehicles.length === 0) {
-    return <CreateVehicleForm />
+  if (localVehicles.length === 0) {
+    return <CreateVehicleForm onCreated={handleVehicleCreated} />
   }
 
   const sheet = parseResults?.[sheetIdx] ?? null
@@ -354,7 +367,7 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
             Import into vehicle
           </label>
           <VehicleSelect
-            vehicles={vehicles}
+            vehicles={localVehicles}
             value={vehicleId || null}
             onChange={setVehicleId}
           />
@@ -369,7 +382,10 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
           )}
           {showAddVehicle && (
             <div className="mt-4">
-              <CreateVehicleForm onCancel={() => setShowAddVehicle(false)} />
+              <CreateVehicleForm
+                onCancel={() => setShowAddVehicle(false)}
+                onCreated={handleVehicleCreated}
+              />
             </div>
           )}
         </div>
