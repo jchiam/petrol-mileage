@@ -74,10 +74,10 @@ export function PreviewTable({ rows, selected, onToggle, onSelectAll }: Props) {
                   key={row.sheetRow}
                   className={
                     !row.valid
-                      ? 'bg-red-50 text-gray-400'
+                      ? 'bg-red-50 text-gray-500'
                       : checked
-                        ? 'bg-white'
-                        : 'bg-gray-50 text-gray-400'
+                        ? 'bg-white text-gray-900'
+                        : 'bg-gray-50 text-gray-500'
                   }
                 >
                   <td className="px-3 py-2 text-center">
