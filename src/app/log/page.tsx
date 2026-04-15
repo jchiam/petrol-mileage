@@ -1,5 +1,6 @@
 import { db } from '@/db'
 import { vehicles } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 import { LogForm } from './LogForm'
 import type { Metadata } from 'next'
 
@@ -8,21 +9,16 @@ export const metadata: Metadata = {
 }
 
 export default async function LogPage() {
-  const allVehicles = await db.select().from(vehicles).orderBy(vehicles.name)
+  const [currentVehicle] = await db
+    .select()
+    .from(vehicles)
+    .where(eq(vehicles.isCurrent, true))
+    .limit(1)
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-sm mx-auto px-5 pt-6 pb-safe">
-        {allVehicles.length === 0 ? (
-          <p className="text-gray-500 text-sm">
-            No vehicles set up yet.{' '}
-            <a href="/" className="underline">
-              Add one on the dashboard.
-            </a>
-          </p>
-        ) : (
-          <LogForm initialVehicles={allVehicles} />
-        )}
+        <LogForm currentVehicle={currentVehicle ?? null} />
       </div>
     </div>
   )

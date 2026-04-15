@@ -4,7 +4,7 @@ import { useState } from 'react'
 import type { Vehicle } from '@/db/schema'
 
 interface LogFormProps {
-  initialVehicles: Vehicle[]
+  currentVehicle: Vehicle | null
 }
 
 interface ConfirmedFill {
@@ -32,14 +32,7 @@ function formatDate(dateStr: string): string {
   })
 }
 
-export function LogForm({ initialVehicles }: LogFormProps) {
-  const activeVehicles = initialVehicles.filter((v) => v.isActive)
-  const hasRetired = initialVehicles.some((v) => !v.isActive)
-
-  const [showRetired, setShowRetired] = useState(false)
-  const [selectedVehicleId, setSelectedVehicleId] = useState<number>(
-    (initialVehicles.find((v) => v.isCurrent) ?? activeVehicles[0] ?? initialVehicles[0]).id,
-  )
+export function LogForm({ currentVehicle }: LogFormProps) {
   const [date, setDate] = useState(todayString)
   const [petrolL, setPetrolL] = useState('')
   const [mileageKm, setMileageKm] = useState('')
@@ -48,10 +41,16 @@ export function LogForm({ initialVehicles }: LogFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [confirmed, setConfirmed] = useState<ConfirmedFill | null>(null)
 
-  const visibleVehicles = showRetired ? initialVehicles : activeVehicles
-  const selectedVehicle = initialVehicles.find((v) => v.id === selectedVehicleId)
-  // Show vehicle selector only when there's a choice to make
-  const showSelector = visibleVehicles.length > 1 || (showRetired && initialVehicles.length > 1)
+  if (!currentVehicle) {
+    return (
+      <div className="py-16 text-center">
+        <p className="text-gray-600 mb-2">No current vehicle set.</p>
+        <a href="/" className="text-blue-600 underline text-sm">
+          Go to dashboard to set one ★
+        </a>
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -63,7 +62,7 @@ export function LogForm({ initialVehicles }: LogFormProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          vehicle_id: selectedVehicleId,
+          vehicle_id: currentVehicle.id,
           pump_date: date,
           petrol_l: petrolL,
           mileage_km: mileageKm,
@@ -82,7 +81,7 @@ export function LogForm({ initialVehicles }: LogFormProps) {
       const c = parseFloat(cost)
 
       setConfirmed({
-        vehicleName: selectedVehicle?.name ?? 'Vehicle',
+        vehicleName: currentVehicle.name,
         pumpDate: date,
         kmPerL: km / pl,
         costPerKm: c / km,
@@ -110,59 +109,16 @@ export function LogForm({ initialVehicles }: LogFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      {/* Vehicle selector — hidden when only one active vehicle */}
-      {(activeVehicles.length > 1 || showRetired || hasRetired) && (
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-            Vehicle
-          </span>
-
-          {showSelector && (
-            <div className="flex flex-wrap gap-2">
-              {visibleVehicles.map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={() => setSelectedVehicleId(v.id)}
-                  className={[
-                    'px-4 py-2.5 rounded-xl text-sm font-medium border-2 transition-colors flex items-center gap-1.5',
-                    selectedVehicleId === v.id
-                      ? 'bg-gray-900 border-gray-900 text-white'
-                      : 'bg-white border-gray-200 text-gray-700 active:bg-gray-50',
-                    !v.isActive ? 'opacity-60' : '',
-                  ].join(' ')}
-                >
-                  {v.isCurrent && (
-                    <span className={selectedVehicleId === v.id ? 'text-amber-300' : 'text-amber-400'}>
-                      ★
-                    </span>
-                  )}
-                  {v.name}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Show retired toggle — only when there are retired vehicles */}
-          {hasRetired && (
-            <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer w-fit mt-1">
-              <input
-                type="checkbox"
-                checked={showRetired}
-                onChange={(e) => {
-                  setShowRetired(e.target.checked)
-                  // If we hid retired and the current selection is retired, switch to first active
-                  if (!e.target.checked && selectedVehicle && !selectedVehicle.isActive) {
-                    if (activeVehicles[0]) setSelectedVehicleId(activeVehicles[0].id)
-                  }
-                }}
-                className="w-4 h-4 rounded"
-              />
-              Show retired vehicles
-            </label>
-          )}
+      {/* Vehicle display */}
+      <div className="flex flex-col gap-1">
+        <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Vehicle</span>
+        <div className="flex items-center justify-between">
+          <p className="text-gray-900 font-medium">{currentVehicle.name}</p>
+          <a href="/" className="text-xs text-gray-500 hover:text-gray-700">
+            Change in dashboard →
+          </a>
         </div>
-      )}
+      </div>
 
       {/* Date */}
       <div className="flex flex-col gap-1.5">
