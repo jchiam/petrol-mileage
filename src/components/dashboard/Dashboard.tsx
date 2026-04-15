@@ -69,7 +69,7 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
     <div>
       {/* Vehicle switcher + action */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <span className="text-sm font-medium text-gray-600 shrink-0">Vehicle</span>
           <VehicleSelect
             vehicles={vehicles}

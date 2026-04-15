@@ -44,12 +44,12 @@ export function VehicleSelect({ vehicles, value, onChange, onSetCurrent, classNa
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 h-9 pl-3 pr-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white hover:border-gray-400 focus:outline-none focus:border-gray-900 transition-colors"
+        className="flex items-center gap-2 h-9 pl-3 pr-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white hover:border-gray-400 focus:outline-none focus:border-gray-900 transition-colors max-w-[180px] sm:max-w-xs"
       >
         {selected?.isCurrent && (
           <Star className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="currentColor" strokeWidth={0} />
         )}
-        <span className="leading-none">{label}</span>
+        <span className="leading-none truncate min-w-0">{label}</span>
         <ChevronDown
           className={`w-4 h-4 text-gray-500 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`}
         />
