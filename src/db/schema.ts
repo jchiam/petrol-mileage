@@ -30,7 +30,7 @@ export const fillUps = pgTable(
     id: bigserial('id', { mode: 'number' }).primaryKey(),
     vehicleId: bigint('vehicle_id', { mode: 'number' })
       .notNull()
-      .references(() => vehicles.id),
+      .references(() => vehicles.id, { onDelete: 'cascade' }),
     pumpDate: date('pump_date', { mode: 'string' }).notNull(),
     petrolL: numeric('petrol_l', { precision: 6, scale: 3 }).notNull(),
     mileageKm: numeric('mileage_km', { precision: 7, scale: 1 }).notNull(),
