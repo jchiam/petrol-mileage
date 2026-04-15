@@ -12,24 +12,19 @@ import { VehicleSelect } from '../VehicleSelect'
 // Charts use Recharts which is browser-only
 const Charts = dynamic(() => import('./Charts'), { ssr: false })
 
-const VEHICLE_STORAGE_KEY = 'petrol-vehicle-id'
-
 export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }) {
   const activeVehicles = initialVehicles.filter((v) => v.isActive)
 
-  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null)
+  const getDefaultVehicleId = () => {
+    const current = initialVehicles.find((v) => v.isCurrent)
+    return (current ?? activeVehicles[0] ?? initialVehicles[0])?.id ?? null
+  }
+
+  const [vehicles, setVehicles] = useState(initialVehicles)
+  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(getDefaultVehicleId)
   const [statsData, setStatsData] = useState<StatsData | null>(null)
   const [loading, setLoading] = useState(false)
   const [tab, setTab] = useState<'overview' | 'compare'>('overview')
-
-  // Read saved vehicle from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(VEHICLE_STORAGE_KEY)
-    const savedId = saved ? parseInt(saved, 10) : NaN
-    const match = activeVehicles.find((v) => v.id === savedId)
-    const id = (match ?? activeVehicles[0] ?? initialVehicles[0])?.id ?? null
-    setSelectedVehicleId(id)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchStats = useCallback(async (vehicleId: number) => {
     setLoading(true)
@@ -48,7 +43,13 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
 
   const handleVehicleChange = (id: number) => {
     setSelectedVehicleId(id)
-    localStorage.setItem(VEHICLE_STORAGE_KEY, String(id))
+  }
+
+  const handleSetCurrent = async (id: number) => {
+    const res = await fetch(`/api/vehicles/${id}/set-current`, { method: 'POST' })
+    if (res.ok) {
+      setVehicles((prev) => prev.map((v) => ({ ...v, isCurrent: v.id === id })))
+    }
   }
 
   if (initialVehicles.length === 0) {
@@ -71,9 +72,10 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gray-600 shrink-0">Vehicle</span>
           <VehicleSelect
-            vehicles={initialVehicles}
+            vehicles={vehicles}
             value={selectedVehicleId}
             onChange={handleVehicleChange}
+            onSetCurrent={handleSetCurrent}
           />
         </div>
         <a
@@ -95,7 +97,7 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
       </div>
 
       {tab === 'compare' ? (
-        <CompareTab initialVehicles={initialVehicles} />
+        <CompareTab initialVehicles={vehicles} />
       ) : (
         <>
           {/* Loading spinner */}

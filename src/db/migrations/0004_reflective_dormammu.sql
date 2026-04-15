@@ -1,0 +1,1 @@
+ALTER TABLE "vehicles" ADD COLUMN "is_current" boolean DEFAULT false NOT NULL;

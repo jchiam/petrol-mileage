@@ -21,6 +21,7 @@ export const vehicles = pgTable('vehicles', {
   year: integer('year'),
   plate: text('plate'),
   isActive: boolean('is_active').notNull().default(true),
+  isCurrent: boolean('is_current').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

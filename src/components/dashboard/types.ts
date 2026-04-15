@@ -65,5 +65,6 @@ export interface VehicleRow {
   year: number | null
   plate: string | null
   isActive: boolean
+  isCurrent: boolean
   createdAt: string
 }

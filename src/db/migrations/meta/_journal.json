@@ -22,6 +22,20 @@
       "when": 1776206267128,
       "tag": "0002_ambiguous_johnny_blaze",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776441600000,
+      "tag": "0003_vehicle_is_current",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776224404915,
+      "tag": "0004_reflective_dormammu",
+      "breakpoints": true
     }
   ]
 }

@@ -9,6 +9,7 @@ interface VehicleOption {
   id: number
   name: string
   isActive: boolean
+  isCurrent: boolean
 }
 
 type Step = 'upload' | 'preview' | 'done'
@@ -155,7 +156,7 @@ export function ImportWizard({ vehicles: initialVehicles }: { vehicles: VehicleO
   const [localVehicles, setLocalVehicles] = useState(initialVehicles)
   const [step, setStep] = useState<Step>('upload')
   const [vehicleId, setVehicleId] = useState<number>(
-    initialVehicles.find((v) => v.isActive)?.id ?? initialVehicles[0]?.id ?? 0,
+    (initialVehicles.find((v) => v.isCurrent) ?? initialVehicles.find((v) => v.isActive) ?? initialVehicles[0])?.id ?? 0,
   )
   const [showAddVehicle, setShowAddVehicle] = useState(false)
 

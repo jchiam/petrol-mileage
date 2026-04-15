@@ -38,7 +38,7 @@ export function LogForm({ initialVehicles }: LogFormProps) {
 
   const [showRetired, setShowRetired] = useState(false)
   const [selectedVehicleId, setSelectedVehicleId] = useState<number>(
-    (activeVehicles[0] ?? initialVehicles[0]).id,
+    (initialVehicles.find((v) => v.isCurrent) ?? activeVehicles[0] ?? initialVehicles[0]).id,
   )
   const [date, setDate] = useState(todayString)
   const [petrolL, setPetrolL] = useState('')
@@ -125,13 +125,18 @@ export function LogForm({ initialVehicles }: LogFormProps) {
                   type="button"
                   onClick={() => setSelectedVehicleId(v.id)}
                   className={[
-                    'px-4 py-2.5 rounded-xl text-sm font-medium border-2 transition-colors',
+                    'px-4 py-2.5 rounded-xl text-sm font-medium border-2 transition-colors flex items-center gap-1.5',
                     selectedVehicleId === v.id
                       ? 'bg-gray-900 border-gray-900 text-white'
                       : 'bg-white border-gray-200 text-gray-700 active:bg-gray-50',
                     !v.isActive ? 'opacity-60' : '',
                   ].join(' ')}
                 >
+                  {v.isCurrent && (
+                    <span className={selectedVehicleId === v.id ? 'text-amber-300' : 'text-amber-400'}>
+                      ★
+                    </span>
+                  )}
                   {v.name}
                 </button>
               ))}

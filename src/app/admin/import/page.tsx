@@ -13,6 +13,7 @@ export default async function ImportPage() {
     id: v.id,
     name: v.name,
     isActive: v.isActive,
+    isCurrent: v.isCurrent,
   }))
   return (
     <div className="min-h-screen bg-gray-50">
