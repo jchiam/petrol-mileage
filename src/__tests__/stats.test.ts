@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { FillUp } from '@/db/schema';
 import {
@@ -6,12 +6,16 @@ import {
   computeForecast,
   computeKPIs,
   computeMetrics,
+  computeStats,
+  daysAgoSGT,
   daysInMonth,
   detectAnomalies,
   type FillMetrics,
   mean,
   median,
+  monthStartSGT,
   stddev,
+  todaySGT,
 } from '@/lib/stats';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -282,5 +286,113 @@ describe('computeForecast', () => {
     const f = computeForecast(fills);
     expect(f.annualProjection).not.toBeNull();
     expect(f.annualProjection!).toBeGreaterThan(0);
+  });
+});
+
+// ─── Date helpers (SGT) ───────────────────────────────────────────────────────
+
+describe('todaySGT / monthStartSGT / daysAgoSGT', () => {
+  // Pin to 2024-03-15T10:00:00Z which is 2024-03-15 18:00 SGT (UTC+8).
+  const PINNED_UTC_MS = Date.UTC(2024, 2, 15, 10, 0, 0); // months are 0-indexed
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(PINNED_UTC_MS);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('todaySGT returns YYYY-MM-DD in SGT timezone', () => {
+    expect(todaySGT()).toBe('2024-03-15');
+  });
+
+  it('monthStartSGT returns first of current SGT month', () => {
+    expect(monthStartSGT()).toBe('2024-03-01');
+  });
+
+  it('daysAgoSGT(0) = today', () => {
+    expect(daysAgoSGT(0)).toBe('2024-03-15');
+  });
+
+  it('daysAgoSGT(7) = one week before', () => {
+    expect(daysAgoSGT(7)).toBe('2024-03-08');
+  });
+
+  it('daysAgoSGT(30) crosses month boundary', () => {
+    // 2024-03-15 minus 30 days = 2024-02-14
+    expect(daysAgoSGT(30)).toBe('2024-02-14');
+  });
+});
+
+// ─── computeStats integration ─────────────────────────────────────────────────
+
+describe('computeStats', () => {
+  it('returns correct shape for empty fills', () => {
+    const result = computeStats([]);
+    expect(result.kpis.latestKmPerL).toBeNull();
+    expect(result.forecast.nextMonthExpected).toBeNull();
+    expect(result.charts.fills).toHaveLength(0);
+    expect(result.fillsWithAnomalies).toHaveLength(0);
+  });
+
+  it('voided fills appear in fillsWithAnomalies but not in KPIs/charts', () => {
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' });
+    const fills: FillUp[] = [
+      makeFill({
+        id: 1,
+        pumpDate: today,
+        petrolL: '40',
+        mileageKm: '500',
+        cost: '80',
+        voidedAt: new Date(),
+      }),
+      makeFill({ id: 2, pumpDate: today, petrolL: '50', mileageKm: '600', cost: '100' }),
+    ];
+    const result = computeStats(fills);
+    // Both fills present in the table view
+    expect(result.fillsWithAnomalies).toHaveLength(2);
+    // KPIs only see fill id=2 (non-voided): km/L = 600/50 = 12
+    expect(result.kpis.latestKmPerL).toBeCloseTo(12);
+    // Chart only contains non-voided fill
+    expect(result.charts.fills).toHaveLength(1);
+    expect(result.charts.fills[0].id).toBe(2);
+  });
+
+  it('anomalies are attached per fill', () => {
+    // Create 6 fills with consistent km/L ~12 so stddev is non-zero
+    const dates = [
+      '2024-01-01',
+      '2024-01-08',
+      '2024-01-15',
+      '2024-01-22',
+      '2024-01-29',
+      '2024-02-05',
+    ];
+    const fills: FillUp[] = [
+      makeFill({ id: 1, pumpDate: dates[0], petrolL: '40', mileageKm: '480', cost: '80' }),
+      makeFill({ id: 2, pumpDate: dates[1], petrolL: '40', mileageKm: '500', cost: '80' }),
+      makeFill({ id: 3, pumpDate: dates[2], petrolL: '40', mileageKm: '520', cost: '80' }),
+      makeFill({ id: 4, pumpDate: dates[3], petrolL: '40', mileageKm: '510', cost: '80' }),
+      makeFill({ id: 5, pumpDate: dates[4], petrolL: '40', mileageKm: '490', cost: '80' }),
+      // Last fill: terrible km/L to trigger efficiency anomaly
+      makeFill({ id: 6, pumpDate: dates[5], petrolL: '40', mileageKm: '100', cost: '80' }),
+    ];
+    const result = computeStats(fills);
+    const lastFill = result.fillsWithAnomalies.find((f) => f.id === 6);
+    expect(lastFill).toBeDefined();
+    expect(lastFill!.anomalies.some((a) => a.type === 'efficiency')).toBe(true);
+  });
+
+  it('fills sorted by pumpDate then id in fillsWithAnomalies', () => {
+    const fills: FillUp[] = [
+      makeFill({ id: 3, pumpDate: '2024-03-01' }),
+      makeFill({ id: 1, pumpDate: '2024-01-01' }),
+      makeFill({ id: 2, pumpDate: '2024-02-01' }),
+    ];
+    const result = computeStats(fills);
+    const ids = result.fillsWithAnomalies.map((f) => f.id);
+    expect(ids).toEqual([1, 2, 3]);
   });
 });

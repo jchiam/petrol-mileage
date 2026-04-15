@@ -72,7 +72,10 @@ function normalise(s: string): string {
  * Returns the original header string (for reporting) and its 0-based index,
  * or null if not found.
  */
-function findColumn(headers: string[], aliases: string[]): { name: string; index: number } | null {
+export function findColumn(
+  headers: string[],
+  aliases: string[],
+): { name: string; index: number } | null {
   for (const alias of aliases) {
     const idx = headers.findIndex((h) => normalise(h) === alias);
     if (idx !== -1) return { name: headers[idx], index: idx };
@@ -91,7 +94,7 @@ function findColumn(headers: string[], aliases: string[]): { name: string; index
  * where serial 60 = Feb 29, 1900 (doesn't exist) — serials > 60 are shifted
  * by 1 day relative to real dates.
  */
-function excelSerialToDate(serial: number): string {
+export function excelSerialToDate(serial: number): string {
   const adjusted = serial > 60 ? serial - 1 : serial;
   const epoch = Date.UTC(1899, 11, 31); // Dec 31, 1899
   const date = new Date(epoch + adjusted * 86_400_000);
@@ -106,7 +109,7 @@ function excelSerialToDate(serial: number): string {
  * Handles Date objects, Excel date serials, and common string formats.
  * Returns '' on failure.
  */
-function toDateString(raw: unknown): string {
+export function toDateString(raw: unknown): string {
   if (raw == null || raw === '') return '';
 
   // Date object returned by exceljs for date-formatted cells
@@ -148,7 +151,7 @@ function toDateString(raw: unknown): string {
 /**
  * Parse a numeric field. Returns null for blank, '-', '#VALUE!', or non-numeric.
  */
-function toNumber(raw: unknown): number | null {
+export function toNumber(raw: unknown): number | null {
   if (raw == null) return null;
   const s = String(raw).trim();
   if (s === '' || s === '-' || s.startsWith('#')) return null;
@@ -185,7 +188,9 @@ function resolveCellValue(value: unknown): unknown {
  * Find the header row in a sheet (first row where ≥2 of the 4 key columns match).
  * Returns the 0-based row index and parsed header strings, or null.
  */
-function findHeaderRow(rows: unknown[][]): { headerRowIndex: number; headers: string[] } | null {
+export function findHeaderRow(
+  rows: unknown[][],
+): { headerRowIndex: number; headers: string[] } | null {
   for (let r = 0; r < Math.min(rows.length, 10); r++) {
     const row = rows[r];
     if (!row) continue;
