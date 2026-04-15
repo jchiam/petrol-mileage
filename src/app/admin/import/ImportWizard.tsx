@@ -21,8 +21,14 @@ interface DoneResult {
 
 // ── Isolated component so its own state never interferes with ImportWizard ──
 
+const inputCls = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+
 function CreateVehicleForm({ onCancel }: { onCancel?: () => void }) {
-  const [name, setName] = useState('')
+  const [name, setName]   = useState('')
+  const [make, setMake]   = useState('')
+  const [model, setModel] = useState('')
+  const [year, setYear]   = useState('')
+  const [plate, setPlate] = useState('')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
 
@@ -32,10 +38,21 @@ function CreateVehicleForm({ onCancel }: { onCancel?: () => void }) {
     setCreating(true)
     setError('')
     try {
+      const yearNum = year.trim() ? parseInt(year.trim(), 10) : undefined
+      if (yearNum !== undefined && isNaN(yearNum)) {
+        setError('Year must be a number')
+        return
+      }
       const res = await fetch('/api/vehicles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: trimmed }),
+        body: JSON.stringify({
+          name: trimmed,
+          make: make.trim() || undefined,
+          model: model.trim() || undefined,
+          year: yearNum,
+          plate: plate.trim() || undefined,
+        }),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -51,39 +68,77 @@ function CreateVehicleForm({ onCancel }: { onCancel?: () => void }) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-sm">
-      <p className="text-sm font-medium text-gray-700 mb-1">Add a vehicle</p>
-      <p className="text-xs text-gray-500 mb-4">
-        Create the vehicle first, then import fill-ups for it.
-      </p>
-      <div className="flex gap-2">
+    <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-sm space-y-3">
+      <div>
+        <p className="text-sm font-medium text-gray-700 mb-1">Add a vehicle</p>
+        <p className="text-xs text-gray-500">
+          Create the vehicle first, then import fill-ups for it.
+        </p>
+      </div>
+
+      <div className="space-y-2">
         <input
           type="text"
-          placeholder="Vehicle name (e.g. Honda City)"
+          placeholder="Display name (required, e.g. My Honda City)"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={inputCls}
         />
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="text"
+            placeholder="Make (e.g. Honda)"
+            value={make}
+            onChange={(e) => setMake(e.target.value)}
+            className={inputCls}
+          />
+          <input
+            type="text"
+            placeholder="Model (e.g. City)"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            className={inputCls}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="number"
+            placeholder="Year (e.g. 2021)"
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            className={inputCls}
+          />
+          <input
+            type="text"
+            placeholder="Plate (e.g. SKA1234X)"
+            value={plate}
+            onChange={(e) => setPlate(e.target.value)}
+            className={inputCls}
+          />
+        </div>
+      </div>
+
+      {error && <p className="text-xs text-red-600">{error}</p>}
+
+      <div className="flex items-center justify-between pt-1">
+        {onCancel ? (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-xs text-gray-400 hover:text-gray-600 underline"
+          >
+            Cancel
+          </button>
+        ) : <span />}
         <button
           type="button"
           onClick={handleCreate}
           disabled={!name.trim() || creating}
           className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {creating ? 'Creating…' : 'Create'}
+          {creating ? 'Creating…' : 'Create vehicle'}
         </button>
       </div>
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
-      {onCancel && (
-        <button
-          type="button"
-          onClick={onCancel}
-          className="mt-3 text-xs text-gray-400 hover:text-gray-600 underline"
-        >
-          Cancel
-        </button>
-      )}
     </div>
   )
 }
