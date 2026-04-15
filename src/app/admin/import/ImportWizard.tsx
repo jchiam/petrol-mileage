@@ -278,6 +278,48 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
     }
   }, [parseResults, sheetIdx, selected, vehicleId])
 
+  const handleSubmitAll = useCallback(async () => {
+    if (!parseResults || !vehicleId) return
+    setSubmitting(true)
+    setSubmitError('')
+
+    const toInsert = parseResults.flatMap((s) =>
+      s.rows
+        .filter((r) => r.valid)
+        .map((r) => ({
+          pump_date: r.pump_date,
+          petrol_l: r.petrol_l,
+          mileage_km: r.mileage_km,
+          cost: r.cost,
+        }))
+    )
+
+    if (toInsert.length === 0) {
+      setSubmitError('No valid rows found across any sheet')
+      setSubmitting(false)
+      return
+    }
+
+    try {
+      const res = await fetch('/api/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vehicle_id: vehicleId, rows: toInsert }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setSubmitError(data.error ?? 'Import failed')
+        return
+      }
+      setDoneResult(data)
+      setStep('done')
+    } catch {
+      setSubmitError('Network error — please try again')
+    } finally {
+      setSubmitting(false)
+    }
+  }, [parseResults, vehicleId])
+
   // ── Reset ───────────────────────────────────────────────────────────────────
 
   const reset = useCallback(() => {
@@ -416,7 +458,7 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
             <p className="text-sm text-red-600">{submitError}</p>
           )}
 
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex items-center justify-end gap-3 pt-2 flex-wrap">
             <button
               type="button"
               onClick={reset}
@@ -424,6 +466,19 @@ export function ImportWizard({ vehicles }: { vehicles: VehicleOption[] }) {
             >
               Cancel
             </button>
+            {parseResults && parseResults.length > 1 && (() => {
+              const totalValid = parseResults.reduce((n, s) => n + s.rows.filter((r) => r.valid).length, 0)
+              return (
+                <button
+                  type="button"
+                  onClick={handleSubmitAll}
+                  disabled={submitting || totalValid === 0}
+                  className="px-5 py-2 rounded-lg bg-gray-700 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {submitting ? 'Importing…' : `Import all sheets (${totalValid} rows)`}
+                </button>
+              )
+            })()}
             <button
               type="button"
               onClick={handleSubmit}
