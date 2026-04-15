@@ -91,7 +91,7 @@ export function FillsTable({
           Include voided rows
         </label>
         {pageCount > 1 && (
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-500">
             Page {page + 1} of {pageCount}
           </span>
         )}
@@ -123,7 +123,7 @@ export function FillsTable({
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-10 text-center text-gray-400 text-sm">
+                <td colSpan={8} className="py-10 text-center text-gray-500 text-sm">
                   No fills to show.
                 </td>
               </tr>
@@ -174,7 +174,7 @@ export function FillsTable({
           <button
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50"
+            className="px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
           >
             &larr; Prev
           </button>
@@ -184,7 +184,7 @@ export function FillsTable({
           <button
             onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
             disabled={page >= pageCount - 1}
-            className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50"
+            className="px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
           >
             Next &rarr;
           </button>
@@ -196,7 +196,7 @@ export function FillsTable({
 
 function Th({ children }: { children?: React.ReactNode }) {
   return (
-    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">
       {children}
     </th>
   )

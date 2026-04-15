@@ -38,7 +38,7 @@ export default function Charts({ charts }: { charts: ChartData }) {
   const { fills, monthlySpend } = charts
 
   if (fills.length === 0) {
-    return <p className="text-gray-400 text-sm py-4">No fill data to chart.</p>
+    return <p className="text-gray-500 text-sm py-4">No fill data to chart.</p>
   }
 
   return (

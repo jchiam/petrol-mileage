@@ -43,9 +43,9 @@ function Tile({
 }) {
   return (
     <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{label}</p>
       <p className="text-3xl font-bold text-gray-900 tabular-nums leading-none mb-1">{value}</p>
-      <p className="text-xs text-gray-400">{sublabel}</p>
+      <p className="text-xs text-gray-500">{sublabel}</p>
     </div>
   )
 }

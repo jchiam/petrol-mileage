@@ -113,7 +113,7 @@ export function LogForm({ initialVehicles }: LogFormProps) {
       {/* Vehicle selector — hidden when only one active vehicle */}
       {(activeVehicles.length > 1 || showRetired || hasRetired) && (
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
             Vehicle
           </span>
 
@@ -161,7 +161,7 @@ export function LogForm({ initialVehicles }: LogFormProps) {
 
       {/* Date */}
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="log-date" className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+        <label htmlFor="log-date" className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
           Date
         </label>
         <input
@@ -176,7 +176,7 @@ export function LogForm({ initialVehicles }: LogFormProps) {
 
       {/* Petrol */}
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="log-petrol" className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+        <label htmlFor="log-petrol" className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
           Petrol
         </label>
         <div className="relative">
@@ -189,9 +189,9 @@ export function LogForm({ initialVehicles }: LogFormProps) {
             onChange={(e) => setPetrolL(e.target.value)}
             required
             autoComplete="off"
-            className="w-full h-14 px-4 pr-10 text-lg text-gray-900 placeholder:text-gray-400 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
+            className="w-full h-14 px-4 pr-10 text-lg text-gray-900 placeholder:text-gray-500 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
           />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium pointer-events-none">
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
             L
           </span>
         </div>
@@ -199,7 +199,7 @@ export function LogForm({ initialVehicles }: LogFormProps) {
 
       {/* Mileage */}
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="log-mileage" className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+        <label htmlFor="log-mileage" className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
           Mileage since last fill
         </label>
         <div className="relative">
@@ -212,9 +212,9 @@ export function LogForm({ initialVehicles }: LogFormProps) {
             onChange={(e) => setMileageKm(e.target.value)}
             required
             autoComplete="off"
-            className="w-full h-14 px-4 pr-14 text-lg text-gray-900 placeholder:text-gray-400 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
+            className="w-full h-14 px-4 pr-14 text-lg text-gray-900 placeholder:text-gray-500 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
           />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium pointer-events-none">
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
             km
           </span>
         </div>
@@ -222,11 +222,11 @@ export function LogForm({ initialVehicles }: LogFormProps) {
 
       {/* Cost */}
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="log-cost" className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+        <label htmlFor="log-cost" className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
           Total cost
         </label>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium pointer-events-none">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">
             $
           </span>
           <input
@@ -238,7 +238,7 @@ export function LogForm({ initialVehicles }: LogFormProps) {
             onChange={(e) => setCost(e.target.value)}
             required
             autoComplete="off"
-            className="w-full h-14 pl-8 pr-4 text-lg text-gray-900 placeholder:text-gray-400 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
+            className="w-full h-14 pl-8 pr-4 text-lg text-gray-900 placeholder:text-gray-500 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none bg-white"
           />
         </div>
       </div>
@@ -285,7 +285,7 @@ function ConfirmationCard({ data, onBack }: { data: ConfirmedFill; onBack: () =>
         </button>
         <a
           href="/"
-          className="h-12 flex items-center justify-center rounded-xl text-sm font-medium text-gray-600 border-2 border-gray-200 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          className="h-12 flex items-center justify-center rounded-xl text-sm font-medium text-gray-600 border-2 border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors"
         >
           Back to dashboard
         </a>

@@ -67,7 +67,7 @@ export function CompareTab({ initialVehicles }: { initialVehicles: VehicleRow[] 
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin" />
       </div>
     )
   }
@@ -80,7 +80,7 @@ export function CompareTab({ initialVehicles }: { initialVehicles: VehicleRow[] 
 
   return (
     <div>
-      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+      <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">
         All vehicles — lifetime
       </h2>
       <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
@@ -107,7 +107,7 @@ export function CompareTab({ initialVehicles }: { initialVehicles: VehicleRow[] 
                 <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
                   {vehicle.name}
                   {!vehicle.isActive && (
-                    <span className="ml-1.5 text-xs text-gray-400 font-normal">(retired)</span>
+                    <span className="ml-1.5 text-xs text-gray-500 font-normal">(retired)</span>
                   )}
                 </td>
                 <Td>{stats.fillCount}</Td>
@@ -127,7 +127,7 @@ export function CompareTab({ initialVehicles }: { initialVehicles: VehicleRow[] 
 
 function Th({ children }: { children: React.ReactNode }) {
   return (
-    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">
       {children}
     </th>
   )

@@ -17,11 +17,11 @@ export function ForecastCard({ forecast }: { forecast: Forecast }) {
 
   return (
     <section>
-      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Forecast</h2>
+      <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Forecast</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Next month */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
             Next month
           </p>
           <p className="text-sm text-gray-500 mb-3">{nextMonthLabel()}</p>
@@ -37,13 +37,13 @@ export function ForecastCard({ forecast }: { forecast: Forecast }) {
               )}
             </>
           ) : (
-            <p className="text-gray-400 text-sm">Not enough data</p>
+            <p className="text-gray-500 text-sm">Not enough data</p>
           )}
         </div>
 
         {/* Annual projection */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
             Annual projection
           </p>
           <p className="text-sm text-gray-500 mb-3">{currentYearLabel()}</p>
@@ -52,7 +52,7 @@ export function ForecastCard({ forecast }: { forecast: Forecast }) {
               ${annualProjection.toFixed(2)}
             </p>
           ) : (
-            <p className="text-gray-400 text-sm">Not enough data</p>
+            <p className="text-gray-500 text-sm">Not enough data</p>
           )}
         </div>
       </div>

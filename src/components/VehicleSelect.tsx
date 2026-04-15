@@ -42,16 +42,16 @@ export function VehicleSelect({ vehicles, value, onChange, className }: VehicleS
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 h-9 pl-3 pr-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white hover:border-gray-300 focus:outline-none focus:border-gray-900 transition-colors"
+        className="flex items-center gap-2 h-9 pl-3 pr-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white hover:border-gray-400 focus:outline-none focus:border-gray-900 transition-colors"
       >
         <span className="leading-none">{label}</span>
         <ChevronDown
-          className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-gray-500 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-full overflow-hidden py-1">
+        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-full overflow-hidden py-1">
           {vehicles.map((v) => {
             const isSelected = v.id === value
             return (
@@ -69,7 +69,7 @@ export function VehicleSelect({ vehicles, value, onChange, className }: VehicleS
                 </span>
                 <span>
                   {v.name}
-                  {!v.isActive && <span className="text-gray-400 ml-1">(retired)</span>}
+                  {!v.isActive && <span className="text-gray-500 ml-1">(retired)</span>}
                 </span>
               </button>
             )

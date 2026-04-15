@@ -101,7 +101,7 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
           {/* Loading spinner */}
           {loading && (
             <div className="flex justify-center py-20">
-              <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin" />
             </div>
           )}
 
@@ -157,7 +157,7 @@ function TabButton({
     <button
       onClick={onClick}
       className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-        active ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+        active ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-700'
       }`}
     >
       {children}
@@ -166,5 +166,5 @@ function TabButton({
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">{children}</h2>
+  return <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">{children}</h2>
 }

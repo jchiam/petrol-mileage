@@ -47,7 +47,7 @@ export function VoidDialog({ fill, onConfirm, onClose }: VoidDialogProps) {
           onChange={(e) => setReason(e.target.value)}
           placeholder="e.g. Wrong mileage entered"
           rows={3}
-          className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none resize-none mb-4"
+          className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-500 focus:border-gray-900 focus:outline-none resize-none mb-4"
           autoFocus
         />
 
@@ -57,7 +57,7 @@ export function VoidDialog({ fill, onConfirm, onClose }: VoidDialogProps) {
           <button
             onClick={onClose}
             disabled={submitting}
-            className="flex-1 h-10 border-2 border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            className="flex-1 h-10 border-2 border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
           >
             Cancel
           </button>
