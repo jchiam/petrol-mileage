@@ -108,7 +108,9 @@ function CreateVehicleForm({
         </div>
         <div className="grid grid-cols-2 gap-2">
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]{4}"
             placeholder="Year (e.g. 2021)"
             value={year}
             onChange={(e) => setYear(e.target.value)}
