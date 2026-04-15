@@ -8,27 +8,27 @@ Runs on a UGREEN NAS via Docker Compose, accessible over Tailscale only.
 
 ## Tech Stack
 
-| Layer | Choice |
-|---|---|
-| Framework | Next.js 15 (App Router, TypeScript strict) |
-| Database | Postgres 16 (alpine, Docker) |
-| ORM | Drizzle ORM |
-| Styling | Tailwind CSS v4 |
-| UI primitives | shadcn/ui |
-| Charts | Recharts |
-| Tests | Vitest |
-| Runtime | Node.js 20 (Docker, non-root `nextjs` uid 1001) |
-| Reverse proxy | Caddy (`tls internal`, Tailscale-gated) |
+| Layer         | Choice                                          |
+| ------------- | ----------------------------------------------- |
+| Framework     | Next.js 15 (App Router, TypeScript strict)      |
+| Database      | Postgres 16 (alpine, Docker)                    |
+| ORM           | Drizzle ORM                                     |
+| Styling       | Tailwind CSS v4                                 |
+| UI primitives | shadcn/ui                                       |
+| Charts        | Recharts                                        |
+| Tests         | Vitest                                          |
+| Runtime       | Node.js 20 (Docker, non-root `nextjs` uid 1001) |
+| Reverse proxy | Caddy (`tls internal`, Tailscale-gated)         |
 
 ---
 
 ## Screens
 
-| Route | Description |
-|---|---|
-| `/` | Dashboard — KPI tiles, trend charts, forecast card, recent fills table, vehicle comparison |
-| `/log` | Mobile entry — thumb-friendly form, bookmarkable as PWA |
-| `/admin/import` | Bulk import from `.xlsx` / `.csv` — drag-drop, auto-detect sheet, per-row preview |
+| Route           | Description                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------ |
+| `/`             | Dashboard — KPI tiles, trend charts, forecast card, recent fills table, vehicle comparison |
+| `/log`          | Mobile entry — thumb-friendly form, bookmarkable as PWA                                    |
+| `/admin/import` | Bulk import from `.xlsx` / `.csv` — drag-drop, auto-detect sheet, per-row preview          |
 
 ---
 
@@ -60,15 +60,16 @@ npm run dev
 
 ### Environment variables
 
-| Variable | Required | Description |
-|---|---|---|
-| `POSTGRES_USER` | Yes | Postgres username (used by compose + backup) |
-| `POSTGRES_PASSWORD` | Yes | Postgres password |
-| `POSTGRES_DB` | No | Database name (default: `petrol_mileage`) |
-| `DATABASE_URL` | Yes | Full connection string for the app and migration runner |
-| `BACKUP_DIR` | No | Host path for `.sql.gz` backup files |
+| Variable            | Required | Description                                             |
+| ------------------- | -------- | ------------------------------------------------------- |
+| `POSTGRES_USER`     | Yes      | Postgres username (used by compose + backup)            |
+| `POSTGRES_PASSWORD` | Yes      | Postgres password                                       |
+| `POSTGRES_DB`       | No       | Database name (default: `petrol_mileage`)               |
+| `DATABASE_URL`      | Yes      | Full connection string for the app and migration runner |
+| `BACKUP_DIR`        | No       | Host path for `.sql.gz` backup files                    |
 
 `DATABASE_URL` format:
+
 - **Local dev** (host → Docker): `postgresql://petrol:<password>@localhost:5432/petrol_mileage`
 - **Production** (inside Docker): `postgresql://petrol:<password>@db:5432/petrol_mileage`
 
@@ -126,6 +127,7 @@ See [`docker/Caddyfile.snippet`](docker/Caddyfile.snippet) for the full block.
 ### Backup & restore
 
 The `backup` sidecar runs automatically:
+
 - Immediate backup on container start
 - Daily at 03:00 SGT
 - Rolling retention: 10 most recent `.sql.gz` files

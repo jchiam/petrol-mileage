@@ -1,44 +1,45 @@
-'use client'
+'use client';
 
 import {
-  ComposedChart,
-  LineChart,
-  BarChart,
-  Line,
   Bar,
+  BarChart,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts'
-import type { ChartData } from './types'
+} from 'recharts';
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+import type { ChartData } from './types';
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function fmtFillDate(d: string): string {
-  const parts = d.split('-')
-  const month = parseInt(parts[1], 10)
-  const day = parseInt(parts[2], 10)
-  return `${day} ${MONTHS[month - 1]}`
+  const parts = d.split('-');
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  return `${day} ${MONTHS[month - 1]}`;
 }
 
 function fmtMonth(m: string): string {
-  const parts = m.split('-')
-  const year = parts[0]
-  const month = parseInt(parts[1], 10)
-  return `${MONTHS[month - 1]} '${year.slice(2)}`
+  const parts = m.split('-');
+  const year = parts[0];
+  const month = parseInt(parts[1], 10);
+  return `${MONTHS[month - 1]} '${year.slice(2)}`;
 }
 
-const GRID = { strokeDasharray: '3 3', stroke: '#F3F4F6' }
-const AXIS_TICK = { fontSize: 11, fill: '#9CA3AF' }
+const GRID = { strokeDasharray: '3 3', stroke: '#F3F4F6' };
+const AXIS_TICK = { fontSize: 11, fill: '#9CA3AF' };
 
 export default function Charts({ charts }: { charts: ChartData }) {
-  const { fills, monthlySpend } = charts
+  const { fills, monthlySpend } = charts;
 
   if (fills.length === 0) {
-    return <p className="text-gray-500 text-sm py-4">No fill data to chart.</p>
+    return <p className="py-4 text-sm text-gray-500">No fill data to chart.</p>;
   }
 
   return (
@@ -130,10 +131,7 @@ export default function Charts({ charts }: { charts: ChartData }) {
       {/* Monthly spend */}
       <ChartCard title="Monthly spend">
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart
-            data={monthlySpend}
-            margin={{ top: 4, right: 16, left: 0, bottom: 0 }}
-          >
+          <BarChart data={monthlySpend} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid {...GRID} />
             <XAxis
               dataKey="month"
@@ -142,11 +140,7 @@ export default function Charts({ charts }: { charts: ChartData }) {
               interval="preserveStartEnd"
               minTickGap={40}
             />
-            <YAxis
-              tickFormatter={(v: number) => `$${v.toFixed(0)}`}
-              tick={AXIS_TICK}
-              width={54}
-            />
+            <YAxis tickFormatter={(v: number) => `$${v.toFixed(0)}`} tick={AXIS_TICK} width={54} />
             <Tooltip
               labelFormatter={(l) => fmtMonth(String(l))}
               formatter={(v: unknown) => [`$${Number(v).toFixed(2)}`, 'Spend']}
@@ -156,14 +150,14 @@ export default function Charts({ charts }: { charts: ChartData }) {
         </ResponsiveContainer>
       </ChartCard>
     </div>
-  )
+  );
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-      <p className="text-sm font-semibold text-gray-700 mb-4">{title}</p>
+    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+      <p className="mb-4 text-sm font-semibold text-gray-700">{title}</p>
       {children}
     </div>
-  )
+  );
 }

@@ -1,13 +1,15 @@
-import type { Metadata, Viewport } from 'next'
-import './globals.css'
-import { AppNav } from '@/components/AppNav'
+import './globals.css';
+
+import type { Metadata, Viewport } from 'next';
+
+import { AppNav } from '@/components/AppNav';
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
   themeColor: '#ffffff',
-}
+};
 
 export const metadata: Metadata = {
   title: 'Petrol Tracker',
@@ -21,12 +23,12 @@ export const metadata: Metadata = {
     title: 'Petrol',
     statusBarStyle: 'default',
   },
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="en">
@@ -35,5 +37,5 @@ export default function RootLayout({
         {children}
       </body>
     </html>
-  )
+  );
 }

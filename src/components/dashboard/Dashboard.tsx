@@ -1,76 +1,77 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useCallback } from 'react'
-import dynamic from 'next/dynamic'
-import type { VehicleRow, StatsData } from './types'
-import { KpiTiles } from './KpiTiles'
-import { ForecastCard } from './ForecastCard'
-import { FillsTable } from './FillsTable'
-import { CompareTab } from './CompareTab'
-import { VehicleSelect } from '../VehicleSelect'
+import dynamic from 'next/dynamic';
+import { useCallback, useEffect, useState } from 'react';
+
+import { VehicleSelect } from '../VehicleSelect';
+import { CompareTab } from './CompareTab';
+import { FillsTable } from './FillsTable';
+import { ForecastCard } from './ForecastCard';
+import { KpiTiles } from './KpiTiles';
+import type { StatsData, VehicleRow } from './types';
 
 // Charts use Recharts which is browser-only
-const Charts = dynamic(() => import('./Charts'), { ssr: false })
+const Charts = dynamic(() => import('./Charts'), { ssr: false });
 
 export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }) {
-  const activeVehicles = initialVehicles.filter((v) => v.isActive)
+  const activeVehicles = initialVehicles.filter((v) => v.isActive);
 
   const getDefaultVehicleId = () => {
-    const current = initialVehicles.find((v) => v.isCurrent)
-    return (current ?? activeVehicles[0] ?? initialVehicles[0])?.id ?? null
-  }
+    const current = initialVehicles.find((v) => v.isCurrent);
+    return (current ?? activeVehicles[0] ?? initialVehicles[0])?.id ?? null;
+  };
 
-  const [vehicles, setVehicles] = useState(initialVehicles)
-  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(getDefaultVehicleId)
-  const [statsData, setStatsData] = useState<StatsData | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [tab, setTab] = useState<'overview' | 'compare'>('overview')
+  const [vehicles, setVehicles] = useState(initialVehicles);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(getDefaultVehicleId);
+  const [statsData, setStatsData] = useState<StatsData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState<'overview' | 'compare'>('overview');
 
   const fetchStats = useCallback(async (vehicleId: number) => {
-    setLoading(true)
-    setStatsData(null)
+    setLoading(true);
+    setStatsData(null);
     try {
-      const res = await fetch(`/api/fills/stats?vehicle_id=${vehicleId}`)
-      if (res.ok) setStatsData(await res.json())
+      const res = await fetch(`/api/fills/stats?vehicle_id=${vehicleId}`);
+      if (res.ok) setStatsData(await res.json());
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    if (selectedVehicleId != null) fetchStats(selectedVehicleId)
-  }, [selectedVehicleId, fetchStats])
+    if (selectedVehicleId != null) fetchStats(selectedVehicleId);
+  }, [selectedVehicleId, fetchStats]);
 
   const handleVehicleChange = (id: number) => {
-    setSelectedVehicleId(id)
-  }
+    setSelectedVehicleId(id);
+  };
 
   const handleSetCurrent = async (id: number) => {
-    const res = await fetch(`/api/vehicles/${id}/set-current`, { method: 'POST' })
+    const res = await fetch(`/api/vehicles/${id}/set-current`, { method: 'POST' });
     if (res.ok) {
-      setVehicles((prev) => prev.map((v) => ({ ...v, isCurrent: v.id === id })))
+      setVehicles((prev) => prev.map((v) => ({ ...v, isCurrent: v.id === id })));
     }
-  }
+  };
 
   if (initialVehicles.length === 0) {
     return (
       <div className="py-20 text-center">
-        <p className="text-gray-500 mb-2">No vehicles set up yet.</p>
-        <a href="/admin/import" className="text-blue-600 underline text-sm">
+        <p className="mb-2 text-gray-500">No vehicles set up yet.</p>
+        <a href="/admin/import" className="text-sm text-blue-600 underline">
           Import historical data
         </a>
       </div>
-    )
+    );
   }
 
-  const hasFills = statsData && statsData.fillsWithAnomalies.some((f) => !f.voidedAt)
+  const hasFills = statsData && statsData.fillsWithAnomalies.some((f) => !f.voidedAt);
 
   return (
     <div>
       {/* Vehicle switcher + action */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <span className="text-sm font-medium text-gray-600 shrink-0">Vehicle</span>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <span className="shrink-0 text-sm font-medium text-gray-600">Vehicle</span>
           <VehicleSelect
             vehicles={vehicles}
             value={selectedVehicleId}
@@ -80,14 +81,14 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
         </div>
         <a
           href="/log"
-          className="h-9 px-4 bg-gray-900 text-white rounded-lg text-sm font-medium flex items-center hover:bg-gray-700 transition-colors shrink-0"
+          className="flex h-9 shrink-0 items-center rounded-lg bg-gray-900 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"
         >
           Log fill-up &rarr;
         </a>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit mb-8">
+      <div className="mb-8 flex w-fit gap-1 rounded-xl bg-gray-100 p-1">
         <TabButton active={tab === 'overview'} onClick={() => setTab('overview')}>
           Overview
         </TabButton>
@@ -103,7 +104,7 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
           {/* Loading spinner */}
           {loading && (
             <div className="flex justify-center py-20">
-              <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin" />
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-800" />
             </div>
           )}
 
@@ -134,7 +135,7 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
                 <FillsTable
                   fills={statsData.fillsWithAnomalies}
                   onVoidSuccess={() => {
-                    if (selectedVehicleId != null) fetchStats(selectedVehicleId)
+                    if (selectedVehicleId != null) fetchStats(selectedVehicleId);
                   }}
                 />
               </section>
@@ -143,7 +144,7 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
         </>
       )}
     </div>
-  )
+  );
 }
 
 function TabButton({
@@ -151,22 +152,24 @@ function TabButton({
   onClick,
   children,
 }: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+      className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
         active ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-700'
       }`}
     >
       {children}
     </button>
-  )
+  );
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">{children}</h2>
+  return (
+    <h2 className="mb-4 text-sm font-semibold tracking-wide text-gray-600 uppercase">{children}</h2>
+  );
 }

@@ -92,12 +92,8 @@
           "name": "fill_ups_vehicle_id_vehicles_id_fk",
           "tableFrom": "fill_ups",
           "tableTo": "vehicles",
-          "columnsFrom": [
-            "vehicle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["vehicle_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

@@ -1,22 +1,22 @@
-'use client'
+'use client';
 
-import type { ParsedRow } from '@/lib/import-parser'
+import type { ParsedRow } from '@/lib/import-parser';
 
 interface Props {
-  rows: ParsedRow[]
-  selected: Set<number>
-  onToggle: (sheetRow: number) => void
-  onSelectAll: (value: boolean) => void
+  rows: ParsedRow[];
+  selected: Set<number>;
+  onToggle: (sheetRow: number) => void;
+  onSelectAll: (value: boolean) => void;
 }
 
 export function PreviewTable({ rows, selected, onToggle, onSelectAll }: Props) {
-  const validRows = rows.filter((r) => r.valid)
-  const allValidSelected = validRows.length > 0 && validRows.every((r) => selected.has(r.sheetRow))
-  const someSelected = rows.some((r) => selected.has(r.sheetRow))
+  const validRows = rows.filter((r) => r.valid);
+  const allValidSelected = validRows.length > 0 && validRows.every((r) => selected.has(r.sheetRow));
+  const someSelected = rows.some((r) => selected.has(r.sheetRow));
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
+      <div className="mb-2 flex items-center justify-between">
         <p className="text-sm text-gray-600">
           <span className="font-medium">{selected.size}</span> of{' '}
           <span className="font-medium">{rows.length}</span> rows selected
@@ -48,7 +48,7 @@ export function PreviewTable({ rows, selected, onToggle, onSelectAll }: Props) {
 
       <div className="overflow-x-auto rounded-lg border border-gray-200">
         <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wide">
+          <thead className="bg-gray-50 text-xs tracking-wide text-gray-600 uppercase">
             <tr>
               <th className="w-10 px-3 py-2">
                 <input
@@ -68,7 +68,7 @@ export function PreviewTable({ rows, selected, onToggle, onSelectAll }: Props) {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {rows.map((row) => {
-              const checked = selected.has(row.sheetRow)
+              const checked = selected.has(row.sheetRow);
               return (
                 <tr
                   key={row.sheetRow}
@@ -93,25 +93,35 @@ export function PreviewTable({ rows, selected, onToggle, onSelectAll }: Props) {
                     {row.pump_date || <span className="text-red-400 italic">—</span>}
                   </td>
                   <td className="px-3 py-2 text-right font-mono">
-                    {row.petrol_l != null ? row.petrol_l.toFixed(3) : <span className="text-red-400 italic">—</span>}
-                  </td>
-                  <td className="px-3 py-2 text-right font-mono">
-                    {row.mileage_km != null ? row.mileage_km.toFixed(1) : <span className="text-red-400 italic">—</span>}
-                  </td>
-                  <td className="px-3 py-2 text-right font-mono">
-                    {row.cost != null ? row.cost.toFixed(2) : <span className="text-red-400 italic">—</span>}
-                  </td>
-                  <td className="px-3 py-2 text-xs">
-                    {!row.valid && (
-                      <span className="text-red-500">{row.invalidReason}</span>
+                    {row.petrol_l != null ? (
+                      row.petrol_l.toFixed(3)
+                    ) : (
+                      <span className="text-red-400 italic">—</span>
                     )}
                   </td>
+                  <td className="px-3 py-2 text-right font-mono">
+                    {row.mileage_km != null ? (
+                      row.mileage_km.toFixed(1)
+                    ) : (
+                      <span className="text-red-400 italic">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-right font-mono">
+                    {row.cost != null ? (
+                      row.cost.toFixed(2)
+                    ) : (
+                      <span className="text-red-400 italic">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-xs">
+                    {!row.valid && <span className="text-red-500">{row.invalidReason}</span>}
+                  </td>
                 </tr>
-              )
+              );
             })}
           </tbody>
         </table>
       </div>
     </div>
-  )
+  );
 }

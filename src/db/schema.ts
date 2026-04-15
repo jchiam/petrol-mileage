@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   bigint,
   bigserial,
@@ -10,8 +11,7 @@ import {
   text,
   timestamp,
   uniqueIndex,
-} from 'drizzle-orm/pg-core'
-import { sql } from 'drizzle-orm'
+} from 'drizzle-orm/pg-core';
 
 export const vehicles = pgTable('vehicles', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
@@ -23,7 +23,7 @@ export const vehicles = pgTable('vehicles', {
   isActive: boolean('is_active').notNull().default(true),
   isCurrent: boolean('is_current').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+});
 
 export const fillUps = pgTable(
   'fill_ups',
@@ -45,10 +45,10 @@ export const fillUps = pgTable(
     uniqueIndex('uq_fillups_active')
       .on(table.vehicleId, table.pumpDate, table.petrolL, table.mileageKm, table.cost)
       .where(sql`${table.voidedAt} IS NULL`),
-  ]
-)
+  ],
+);
 
-export type Vehicle = typeof vehicles.$inferSelect
-export type NewVehicle = typeof vehicles.$inferInsert
-export type FillUp = typeof fillUps.$inferSelect
-export type NewFillUp = typeof fillUps.$inferInsert
+export type Vehicle = typeof vehicles.$inferSelect;
+export type NewVehicle = typeof vehicles.$inferInsert;
+export type FillUp = typeof fillUps.$inferSelect;
+export type NewFillUp = typeof fillUps.$inferInsert;
