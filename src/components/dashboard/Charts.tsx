@@ -64,8 +64,8 @@ export default function Charts({ charts }: { charts: ChartData }) {
             />
             <Tooltip
               labelFormatter={(l) => fmtFillDate(String(l))}
-              formatter={(v: unknown, name: string) =>
-                v != null ? [`${Number(v).toFixed(2)}`, name] : [null, name]
+              formatter={(v, name) =>
+                [`${Number(v ?? 0).toFixed(2)}`, name as string]
               }
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -113,7 +113,7 @@ export default function Charts({ charts }: { charts: ChartData }) {
             />
             <Tooltip
               labelFormatter={(l) => fmtFillDate(String(l))}
-              formatter={(v: unknown) => [`$${Number(v).toFixed(3)}`, '$/km']}
+              formatter={(v) => [`$${Number(v).toFixed(3)}`, '$/km']}
             />
             <Line
               type="monotone"
@@ -143,7 +143,7 @@ export default function Charts({ charts }: { charts: ChartData }) {
             <YAxis tickFormatter={(v: number) => `$${v.toFixed(0)}`} tick={AXIS_TICK} width={54} />
             <Tooltip
               labelFormatter={(l) => fmtMonth(String(l))}
-              formatter={(v: unknown) => [`$${Number(v).toFixed(2)}`, 'Spend']}
+              formatter={(v) => [`$${Number(v).toFixed(2)}`, 'Spend']}
             />
             <Bar dataKey="spend" fill="#3B82F6" radius={[4, 4, 0, 0]} name="Spend" />
           </BarChart>
