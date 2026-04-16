@@ -16,7 +16,7 @@ Runs on a UGREEN NAS via Docker Compose, accessible over Tailscale only.
 | Styling       | Tailwind CSS v4                                 |
 | UI primitives | shadcn/ui                                       |
 | Charts        | Recharts                                        |
-| Tests         | Vitest                                          |
+| Tests         | Vitest (unit), Playwright (e2e)                 |
 | Runtime       | Node.js 20 (Docker, non-root `nextjs` uid 1001) |
 | Reverse proxy | Caddy (`tls internal`, Tailscale-gated)         |
 
@@ -60,13 +60,14 @@ npm run dev
 
 ### Environment variables
 
-| Variable            | Required | Description                                             |
-| ------------------- | -------- | ------------------------------------------------------- |
-| `POSTGRES_USER`     | Yes      | Postgres username (used by compose + backup)            |
-| `POSTGRES_PASSWORD` | Yes      | Postgres password                                       |
-| `POSTGRES_DB`       | No       | Database name (default: `petrol_mileage`)               |
-| `DATABASE_URL`      | Yes      | Full connection string for the app and migration runner |
-| `BACKUP_DIR`        | No       | Host path for `.sql.gz` backup files                    |
+| Variable            | Required | Description                                                              |
+| ------------------- | -------- | ------------------------------------------------------------------------ |
+| `POSTGRES_USER`     | Yes      | Postgres username (used by compose + backup)                             |
+| `POSTGRES_PASSWORD` | Yes      | Postgres password                                                        |
+| `POSTGRES_DB`       | No       | Database name (default: `petrol_mileage`)                                |
+| `DATABASE_URL`      | Yes      | Full connection string for the app and migration runner                  |
+| `BACKUP_DIR`        | No       | Host path for `.sql.gz` backup files                                     |
+| `PROXY_SECRET`      | Yes      | Shared secret checked by Next.js middleware; requests without it get 404 |
 
 `DATABASE_URL` format:
 
@@ -98,11 +99,14 @@ npm run db:studio     # open Drizzle Studio (DB browser)
 ## Testing
 
 ```bash
-npm test              # run all tests once
+npm test              # run all unit tests once
 npm run test:watch    # watch mode
+npm run test:e2e      # run Playwright e2e tests (requires dev server)
 ```
 
-Tests cover all stats math: KPI computation, anomaly detection (efficiency >2σ, price >15% above median), forecast bounds, rolling averages, and chart series grouping.
+Unit tests cover all stats math: KPI computation, anomaly detection (efficiency >2σ, price >15% above median), forecast bounds, rolling averages, and chart series grouping.
+
+E2e tests cover the dashboard, log entry, import, and navigation flows.
 
 ---
 
@@ -123,6 +127,8 @@ import /path/to/docker/Caddyfile.snippet
 ```
 
 See [`docker/Caddyfile.snippet`](docker/Caddyfile.snippet) for the full block.
+
+The snippet proxies to the Vercel deployment and injects `X-Caddy-Auth` from `$CADDY_PROXY_SECRET`. Set `CADDY_PROXY_SECRET` in Caddy's environment to the same value as `PROXY_SECRET` in Vercel's environment variables. Requests arriving at Vercel without the matching header are rejected with 404.
 
 ### Backup & restore
 
