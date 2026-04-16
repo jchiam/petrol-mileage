@@ -4,9 +4,10 @@ test.describe('navigation', () => {
   test('nav links render on every route', async ({ page }) => {
     for (const path of ['/', '/log', '/admin/import']) {
       await page.goto(path);
-      await expect(page.getByRole('link', { name: 'Dashboard' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'Log fill-up' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'Import' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Dashboard', exact: true })).toBeVisible();
+      // exact:true avoids matching "Log fill-up →" button on the dashboard
+      await expect(page.getByRole('link', { name: 'Log fill-up', exact: true })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Import', exact: true })).toBeVisible();
     }
   });
 

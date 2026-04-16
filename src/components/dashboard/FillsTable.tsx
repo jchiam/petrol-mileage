@@ -41,7 +41,6 @@ export function FillsTable({
   const [showVoided, setShowVoided] = useState(false);
   const [page, setPage] = useState(0);
   const [voidTarget, setVoidTarget] = useState<FillRow | null>(null);
-  const [voidedMessage, setVoidedMessage] = useState<string | null>(null);
 
   // Newest first
   const sorted = [...fills].sort((a, b) => b.pumpDate.localeCompare(a.pumpDate) || b.id - a.id);
@@ -61,8 +60,6 @@ export function FillsTable({
       throw new Error(data.error ?? 'Failed to void');
     }
     setVoidTarget(null);
-    setVoidedMessage(`Fill-up voided. Go to /log to re-enter.`);
-    setTimeout(() => setVoidedMessage(null), 5000);
     onVoidSuccess();
   };
 
@@ -95,15 +92,6 @@ export function FillsTable({
           </span>
         )}
       </div>
-
-      {voidedMessage && (
-        <p className="mb-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-          {voidedMessage}{' '}
-          <a href="/log" className="font-medium underline">
-            Log now
-          </a>
-        </p>
-      )}
 
       <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
         <table className="w-full text-sm">

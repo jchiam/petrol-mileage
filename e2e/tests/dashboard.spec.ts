@@ -58,7 +58,8 @@ test.describe('KPI tiles', () => {
     test.skip(isEmpty, 'No vehicles in dev DB');
 
     // Mock returns latestKmPerL: 12.5, mtdSpend: 240.0
-    await expect(page.getByText('12.50')).toBeVisible();
+    // .first() because 12.50 also appears in the fills table km/L column
+    await expect(page.getByText('12.50').first()).toBeVisible();
     await expect(page.getByText('$240.00')).toBeVisible();
   });
 });
@@ -100,7 +101,8 @@ test.describe('fills table', () => {
 
     // Only 1 void button (for the non-voided row)
     await expect(page.getByRole('button', { name: 'Void & re-enter' })).toHaveCount(1);
-    await expect(page.getByText('voided')).not.toBeVisible();
+    // exact:true avoids matching "Include voided rows" label
+    await expect(page.getByText('voided', { exact: true })).not.toBeVisible();
   });
 
   test('voided fills shown when checkbox checked', async ({ page }) => {
@@ -112,7 +114,7 @@ test.describe('fills table', () => {
     test.skip(isEmpty, 'No vehicles in dev DB');
 
     await page.getByLabel('Include voided rows').check();
-    await expect(page.getByText('voided')).toBeVisible();
+    await expect(page.getByText('voided', { exact: true })).toBeVisible();
   });
 
   test('efficiency anomaly dot visible for flagged fill', async ({ page }) => {

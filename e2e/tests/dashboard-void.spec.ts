@@ -31,11 +31,12 @@ test.describe('void dialog', () => {
   test('clicking void button opens dialog with fill details', async ({ page }) => {
     await page.getByRole('button', { name: 'Void & re-enter' }).click();
 
-    await expect(page.getByRole('heading', { name: 'Void fill-up' })).toBeVisible();
+    const dialog = page.locator('.fixed.inset-0');
+    await expect(dialog.getByRole('heading', { name: 'Void fill-up' })).toBeVisible();
     // Fill details shown in dialog body
-    await expect(page.getByText('2024-01-15')).toBeVisible();
-    await expect(page.getByText(/40\.000 L/)).toBeVisible();
-    await expect(page.getByText(/\$80\.00/)).toBeVisible();
+    await expect(dialog.getByText('2024-01-15')).toBeVisible();
+    await expect(dialog.getByText(/40\.000 L/)).toBeVisible();
+    await expect(dialog.getByText(/\$80\.00/)).toBeVisible();
   });
 
   test('submit button disabled when reason is empty', async ({ page }) => {

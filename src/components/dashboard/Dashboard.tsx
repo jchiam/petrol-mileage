@@ -26,6 +26,7 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
   const [statsData, setStatsData] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'overview' | 'compare'>('overview');
+  const [voidedMessage, setVoidedMessage] = useState<string | null>(null);
 
   const fetchStats = useCallback(async (vehicleId: number) => {
     setLoading(true);
@@ -87,6 +88,16 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
         </a>
       </div>
 
+      {/* Void success banner */}
+      {voidedMessage && (
+        <p className="mb-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+          {voidedMessage}{' '}
+          <a href="/log" className="font-medium underline">
+            Log now
+          </a>
+        </p>
+      )}
+
       {/* Tabs */}
       <div className="mb-8 flex w-fit gap-1 rounded-xl bg-gray-100 p-1">
         <TabButton active={tab === 'overview'} onClick={() => setTab('overview')}>
@@ -135,6 +146,8 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
                 <FillsTable
                   fills={statsData.fillsWithAnomalies}
                   onVoidSuccess={() => {
+                    setVoidedMessage('Fill-up voided. Go to /log to re-enter.');
+                    setTimeout(() => setVoidedMessage(null), 5000);
                     if (selectedVehicleId != null) fetchStats(selectedVehicleId);
                   }}
                 />
