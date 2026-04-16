@@ -17,7 +17,7 @@ Runs on a UGREEN NAS via Docker Compose, accessible over Tailscale only.
 | UI primitives | shadcn/ui                                       |
 | Charts        | Recharts                                        |
 | Tests         | Vitest (unit), Playwright (e2e)                 |
-| Runtime       | Node.js 20 (Docker, non-root `nextjs` uid 1001) |
+| Runtime       | Node.js 24 (Docker, non-root `nextjs` uid 1001) |
 | Reverse proxy | Caddy (`tls internal`, Tailscale-gated)         |
 
 ---
