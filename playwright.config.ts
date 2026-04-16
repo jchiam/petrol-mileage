@@ -22,9 +22,11 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'npm run dev',
+    // CI: build is run beforehand; `next start` is instant and avoids the
+    // dev-mode cold-compilation timeout. Locally, dev server is preferred.
+    command: process.env.CI ? 'npm start' : 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000, // CI cold-starts Next.js slower than local
+    timeout: 60_000,
   },
 });

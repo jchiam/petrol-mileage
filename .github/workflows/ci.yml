@@ -40,8 +40,17 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Build for E2E
+        run: npm run build
+        env:
+          # Neon client initialises at import time; a syntactically valid URL
+          # avoids a sync throw. No real DB is used — all API calls are mocked.
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost/ci' }}
+
       - name: E2E tests
         run: npm run test:e2e
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost/ci' }}
 
       - name: Build
         if: env.DATABASE_URL != ''
