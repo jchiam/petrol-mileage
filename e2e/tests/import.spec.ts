@@ -111,17 +111,17 @@ test.describe('create vehicle form (no vehicles)', () => {
   test('shows create-vehicle form when no vehicles', async ({ page }) => {
     await setupVehiclesMock(page, []);
     await page.goto('/admin/import');
-    await expect(
-      page.getByPlaceholder('Display name (required, e.g. My Honda City)'),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByPlaceholder('Display name (required, e.g. My Honda City)')).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test('create vehicle form submit calls POST /api/vehicles', async ({ page }) => {
     await setupVehiclesMock(page, []);
     await page.goto('/admin/import');
-    await expect(
-      page.getByPlaceholder('Display name (required, e.g. My Honda City)'),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByPlaceholder('Display name (required, e.g. My Honda City)')).toBeVisible({
+      timeout: 10_000,
+    });
 
     await page.route('**/api/vehicles', (route) => {
       if (route.request().method() === 'POST') {

@@ -115,7 +115,9 @@ test.describe('log fill-up form (requires current vehicle)', () => {
     await page.locator('#log-cost').fill('80');
     await page.getByRole('button', { name: 'Log Fill-Up' }).click();
 
-    await expect(page.getByText('All fields must be positive numbers')).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText('All fields must be positive numbers')).toBeVisible({
+      timeout: 5_000,
+    });
   });
 
   test('network error shows connection error message', async ({ page }) => {

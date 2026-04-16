@@ -32,9 +32,7 @@ export function Dashboard() {
   useEffect(() => {
     if (vehicles.length > 0 && selectedVehicleId === null) {
       const cur =
-        vehicles.find((v) => v.isCurrent) ??
-        vehicles.find((v) => v.isActive) ??
-        vehicles[0];
+        vehicles.find((v) => v.isCurrent) ?? vehicles.find((v) => v.isActive) ?? vehicles[0];
       setSelectedVehicleId(cur?.id ?? null);
     }
   }, [vehicles, selectedVehicleId]);
