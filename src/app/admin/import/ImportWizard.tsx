@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { VehicleSelect } from '@/components/VehicleSelect';
 import type { ParsedRow, ParseResult } from '@/lib/import-parser';
@@ -163,17 +163,29 @@ function CreateVehicleForm({
   );
 }
 
-export function ImportWizard({ vehicles: initialVehicles }: { vehicles: VehicleOption[] }) {
-  const [localVehicles, setLocalVehicles] = useState(initialVehicles);
+export function ImportWizard() {
+  const [localVehicles, setLocalVehicles] = useState<VehicleOption[]>([]);
+  const [vehiclesLoading, setVehiclesLoading] = useState(true);
   const [step, setStep] = useState<Step>('upload');
-  const [vehicleId, setVehicleId] = useState<number>(
-    (
-      initialVehicles.find((v) => v.isCurrent) ??
-      initialVehicles.find((v) => v.isActive) ??
-      initialVehicles[0]
-    )?.id ?? 0,
-  );
+  const [vehicleId, setVehicleId] = useState<number>(0);
   const [showAddVehicle, setShowAddVehicle] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/vehicles')
+      .then((r) => r.json())
+      .then((data: VehicleOption[]) => setLocalVehicles(data))
+      .finally(() => setVehiclesLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (localVehicles.length > 0 && vehicleId === 0) {
+      const defaultVehicle =
+        localVehicles.find((v) => v.isCurrent) ??
+        localVehicles.find((v) => v.isActive) ??
+        localVehicles[0];
+      setVehicleId(defaultVehicle?.id ?? 0);
+    }
+  }, [localVehicles, vehicleId]);
 
   const handleVehicleCreated = useCallback((vehicle: VehicleOption) => {
     setLocalVehicles((prev) => [...prev, vehicle]);
@@ -365,6 +377,16 @@ export function ImportWizard({ vehicles: initialVehicles }: { vehicles: VehicleO
     setDoneResult(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
+
+  // ── Loading state ───────────────────────────────────────────────────────────
+
+  if (vehiclesLoading) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-800" />
+      </div>
+    );
+  }
 
   // ── Empty state: no vehicles ────────────────────────────────────────────────
 

@@ -13,20 +13,31 @@ import type { StatsData, VehicleRow } from './types';
 // Charts use Recharts which is browser-only
 const Charts = dynamic(() => import('./Charts'), { ssr: false });
 
-export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }) {
-  const activeVehicles = initialVehicles.filter((v) => v.isActive);
-
-  const getDefaultVehicleId = () => {
-    const current = initialVehicles.find((v) => v.isCurrent);
-    return (current ?? activeVehicles[0] ?? initialVehicles[0])?.id ?? null;
-  };
-
-  const [vehicles, setVehicles] = useState(initialVehicles);
-  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(getDefaultVehicleId);
+export function Dashboard() {
+  const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
+  const [vehiclesLoading, setVehiclesLoading] = useState(true);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
   const [statsData, setStatsData] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'overview' | 'compare'>('overview');
   const [voidedMessage, setVoidedMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/vehicles')
+      .then((r) => r.json())
+      .then((data: VehicleRow[]) => setVehicles(data))
+      .finally(() => setVehiclesLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (vehicles.length > 0 && selectedVehicleId === null) {
+      const cur =
+        vehicles.find((v) => v.isCurrent) ??
+        vehicles.find((v) => v.isActive) ??
+        vehicles[0];
+      setSelectedVehicleId(cur?.id ?? null);
+    }
+  }, [vehicles, selectedVehicleId]);
 
   const fetchStats = useCallback(async (vehicleId: number) => {
     setLoading(true);
@@ -54,7 +65,15 @@ export function Dashboard({ initialVehicles }: { initialVehicles: VehicleRow[] }
     }
   };
 
-  if (initialVehicles.length === 0) {
+  if (vehiclesLoading) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-800" />
+      </div>
+    );
+  }
+
+  if (vehicles.length === 0) {
     return (
       <div className="py-20 text-center">
         <p className="mb-2 text-gray-500">No vehicles set up yet.</p>

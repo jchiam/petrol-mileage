@@ -1,14 +1,16 @@
 /**
  * Import wizard e2e tests.
  *
- * POST /api/admin/parse-import and POST /api/import are fully mocked.
- * The server-rendered vehicle list comes from the dev DB.
- * Tests that require an existing vehicle skip if the DB is empty.
+ * POST /api/admin/parse-import, POST /api/import, and GET /api/vehicles are
+ * fully mocked for deterministic behavior.
  */
 import type { Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+
+import { setupVehiclesMock } from '../helpers/routes';
+import { makeVehicle } from '../mocks';
 
 // ─── Mock payloads ────────────────────────────────────────────────────────────
 
@@ -105,29 +107,21 @@ async function setupImportMocks(page: Page, parseResult = MOCK_PARSE_RESULT) {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-test.describe('create vehicle form (no vehicles in DB)', () => {
-  test('shows create-vehicle form when DB is empty', async ({ page }) => {
+test.describe('create vehicle form (no vehicles)', () => {
+  test('shows create-vehicle form when no vehicles', async ({ page }) => {
+    await setupVehiclesMock(page, []);
     await page.goto('/admin/import');
-    await page.waitForLoadState('domcontentloaded');
-    const hasVehicleSelect = await page.getByTestId('vehicle-select').isVisible();
-    const hasCreateForm = await page
-      .getByPlaceholder('Display name (required, e.g. My Honda City)')
-      .isVisible();
-
-    // One of these states is always true
-    if (hasVehicleSelect) {
-      test.skip(true, 'DB has vehicles — empty state not visible');
-    }
-    expect(hasCreateForm).toBe(true);
+    await expect(
+      page.getByPlaceholder('Display name (required, e.g. My Honda City)'),
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test('create vehicle form submit calls POST /api/vehicles', async ({ page }) => {
+    await setupVehiclesMock(page, []);
     await page.goto('/admin/import');
-    await page.waitForLoadState('domcontentloaded');
-    const hasCreateForm = await page
-      .getByPlaceholder('Display name (required, e.g. My Honda City)')
-      .isVisible();
-    test.skip(!hasCreateForm, 'DB has vehicles — test only applies to empty DB');
+    await expect(
+      page.getByPlaceholder('Display name (required, e.g. My Honda City)'),
+    ).toBeVisible({ timeout: 10_000 });
 
     await page.route('**/api/vehicles', (route) => {
       if (route.request().method() === 'POST') {
@@ -147,13 +141,12 @@ test.describe('create vehicle form (no vehicles in DB)', () => {
   });
 });
 
-test.describe('file upload and import flow (requires ≥1 vehicle)', () => {
+test.describe('file upload and import flow', () => {
   test.beforeEach(async ({ page }) => {
+    await setupVehiclesMock(page, [makeVehicle()]);
     await setupImportMocks(page);
     await page.goto('/admin/import');
-    await page.waitForLoadState('domcontentloaded');
-    const hasVehicle = await page.getByTestId('vehicle-select').isVisible();
-    test.skip(!hasVehicle, 'Requires ≥1 vehicle in dev DB');
+    await page.getByTestId('vehicle-select').waitFor({ timeout: 10_000 });
   });
 
   test('upload zone renders with correct description', async ({ page }) => {
@@ -239,11 +232,10 @@ test.describe('file upload and import flow (requires ≥1 vehicle)', () => {
 
 test.describe('multi-sheet import', () => {
   test('shows sheet tabs and "import all" button for multi-sheet file', async ({ page }) => {
+    await setupVehiclesMock(page, [makeVehicle()]);
     await setupImportMocks(page, MOCK_PARSE_MULTI_SHEET);
     await page.goto('/admin/import');
-    await page.waitForLoadState('domcontentloaded');
-    const hasVehicle = await page.getByTestId('vehicle-select').isVisible();
-    test.skip(!hasVehicle, 'Requires ≥1 vehicle in dev DB');
+    await page.getByTestId('vehicle-select').waitFor({ timeout: 10_000 });
 
     const fileChooserPromise = page.waitForEvent('filechooser');
     await page.getByTestId('upload-zone').click();
@@ -267,11 +259,10 @@ test.describe('multi-sheet import', () => {
 
 test.describe('"+ Add vehicle" in import wizard', () => {
   test('creates vehicle and it appears in selector', async ({ page }) => {
+    await setupVehiclesMock(page, [makeVehicle()]);
     await setupImportMocks(page);
     await page.goto('/admin/import');
-    await page.waitForLoadState('domcontentloaded');
-    const hasVehicle = await page.getByTestId('vehicle-select').isVisible();
-    test.skip(!hasVehicle, 'Requires ≥1 vehicle in dev DB');
+    await page.getByTestId('vehicle-select').waitFor({ timeout: 10_000 });
 
     await page.route('**/api/vehicles', (route) => {
       if (route.request().method() === 'POST') {

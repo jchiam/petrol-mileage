@@ -1,11 +1,12 @@
 /**
  * Log fill-up page e2e tests.
  *
- * POST /api/fills is mocked for deterministic behavior.
- * Tests that render the form require a vehicle with isCurrent=true in the dev DB.
- * Tests skip automatically when no current vehicle is set.
+ * POST /api/fills and GET /api/vehicles are mocked for deterministic behavior.
  */
 import { expect, test } from '@playwright/test';
+
+import { setupVehiclesMock } from '../helpers/routes';
+import { makeVehicle } from '../mocks';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -21,29 +22,20 @@ const MOCK_FILL_RESPONSE = {
   createdAt: '2024-01-15T00:00:00.000Z',
 };
 
-async function gotoLogForm(page: Parameters<typeof page.goto>[0] extends infer P ? P : never) {
-  // The real 'page' param
-  return page;
-}
-
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 test('no current vehicle shows empty state', async ({ page }) => {
+  await setupVehiclesMock(page, [makeVehicle({ isCurrent: false })]);
   await page.goto('/log');
-  await page.waitForLoadState('domcontentloaded');
-  const hasForm = await page.locator('#log-petrol').isVisible();
-  const hasEmpty = await page.getByText('No current vehicle set.').isVisible();
-
-  // One of these must be true — verify we handle both states without crashing
-  expect(hasForm || hasEmpty).toBe(true);
+  await page.getByText('No current vehicle set.').waitFor({ timeout: 10_000 });
+  await expect(page.getByText('No current vehicle set.')).toBeVisible();
 });
 
 test.describe('log fill-up form (requires current vehicle)', () => {
   test.beforeEach(async ({ page }) => {
+    await setupVehiclesMock(page, [makeVehicle({ isCurrent: true })]);
     await page.goto('/log');
-    await page.waitForLoadState('domcontentloaded');
-    const isEmpty = await page.getByText('No current vehicle set.').isVisible();
-    test.skip(isEmpty, 'Requires a vehicle with isCurrent=true in dev DB');
+    await page.locator('#log-petrol').waitFor({ timeout: 10_000 });
   });
 
   test('form fields visible', async ({ page }) => {

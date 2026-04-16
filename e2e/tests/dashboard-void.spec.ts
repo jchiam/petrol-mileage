@@ -1,31 +1,23 @@
 /**
  * Void fill-up flow e2e tests.
  *
- * Stats and void API are fully mocked. Requires at least one vehicle in dev DB
- * for the dashboard to render (tests skip if empty state detected).
+ * Stats, vehicles, and void API are fully mocked.
  */
 import { expect, test } from '@playwright/test';
 
-import { setupStatsMock, setupVoidMock } from '../helpers/routes';
-import { makeFillRow, makeStats } from '../mocks';
+import { setupStatsMock, setupVehiclesMock, setupVoidMock } from '../helpers/routes';
+import { makeFillRow, makeStats, makeVehicle } from '../mocks';
 
 const FILL_ID = 99;
 
 test.describe('void dialog', () => {
   test.beforeEach(async ({ page }) => {
     const fill = makeFillRow({ id: FILL_ID, pumpDate: '2024-01-15' });
+    await setupVehiclesMock(page, [makeVehicle()]);
     await setupStatsMock(page, makeStats([fill]));
     await setupVoidMock(page, FILL_ID);
     await page.goto('/');
-
-    // Wait for either dashboard content or empty state
-    await Promise.race([
-      page.getByText('Latest km/L').waitFor({ timeout: 10_000 }),
-      page.getByText('No vehicles set up yet').waitFor({ timeout: 10_000 }),
-    ]);
-
-    const isEmpty = await page.getByText('No vehicles set up yet').isVisible();
-    test.skip(isEmpty, 'No vehicles in dev DB');
+    await page.getByText('Latest km/L').waitFor({ timeout: 10_000 });
   });
 
   test('clicking void button opens dialog with fill details', async ({ page }) => {

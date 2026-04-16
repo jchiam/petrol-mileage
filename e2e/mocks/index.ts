@@ -53,6 +53,18 @@ export interface StatsData {
   fillsWithAnomalies: FillRow[];
 }
 
+export interface VehicleData {
+  id: number;
+  name: string;
+  make: string | null;
+  model: string | null;
+  year: number | null;
+  plate: string | null;
+  isActive: boolean;
+  isCurrent: boolean;
+  createdAt: string;
+}
+
 export function makeFillRow(overrides: Partial<FillRow> = {}): FillRow {
   return {
     id: 1,
@@ -99,5 +111,20 @@ export function makeStats(fills: FillRow[] = [makeFillRow()]): StatsData {
       monthlySpend: [{ month: '2024-01', spend: 240.0 }],
     },
     fillsWithAnomalies: fills,
+  };
+}
+
+export function makeVehicle(overrides: Partial<VehicleData> = {}): VehicleData {
+  return {
+    id: 1,
+    name: 'Test Car',
+    make: null,
+    model: null,
+    year: null,
+    plate: null,
+    isActive: true,
+    isCurrent: true,
+    createdAt: '2024-01-01T00:00:00.000Z',
+    ...overrides,
   };
 }

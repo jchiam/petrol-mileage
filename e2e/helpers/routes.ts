@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 
-import type { StatsData } from '../mocks';
+import type { StatsData, VehicleData } from '../mocks';
 
 /** Mock all /api/fills/stats?vehicle_id=* requests with the given stats payload. */
 export async function setupStatsMock(page: Page, stats: StatsData): Promise<void> {
@@ -19,4 +19,12 @@ export async function setupVoidMock(
       json: responseBody ?? { id: fillId, voidedAt: new Date().toISOString(), voidReason: 'test' },
     }),
   );
+}
+
+/** Mock GET /api/vehicles. POST requests pass through to per-test mocks. */
+export async function setupVehiclesMock(page: Page, vehicles: VehicleData[]): Promise<void> {
+  await page.route('**/api/vehicles', (route) => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: vehicles });
+    return route.continue();
+  });
 }
