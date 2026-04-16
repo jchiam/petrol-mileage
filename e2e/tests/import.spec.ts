@@ -5,18 +5,14 @@
  * The server-rendered vehicle list comes from the dev DB.
  * Tests that require an existing vehicle skip if the DB is empty.
  */
+import type { Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { expect, test } from '@playwright/test';
-import type { Page } from '@playwright/test';
-
 // ─── Mock payloads ────────────────────────────────────────────────────────────
 
-const CSV_CONTENT = fs.readFileSync(
-  path.join(__dirname, '../fixtures/fills.csv'),
-  'utf-8',
-);
+const CSV_CONTENT = fs.readFileSync(path.join(__dirname, '../fixtures/fills.csv'), 'utf-8');
 
 const MOCK_PARSE_RESULT = [
   {
@@ -61,16 +57,40 @@ const MOCK_PARSE_MULTI_SHEET = [
   {
     sheetName: '2023',
     rows: [
-      { sheetRow: 1, pump_date: '2023-06-01', petrol_l: 40.0, mileage_km: 500.0, cost: 80.0, valid: true },
+      {
+        sheetRow: 1,
+        pump_date: '2023-06-01',
+        petrol_l: 40.0,
+        mileage_km: 500.0,
+        cost: 80.0,
+        valid: true,
+      },
     ],
-    detectedColumns: { pumpDate: 'Pump Date', petrolL: 'Petrol (L)', mileageKm: 'Mileage (km)', cost: 'Cost' },
+    detectedColumns: {
+      pumpDate: 'Pump Date',
+      petrolL: 'Petrol (L)',
+      mileageKm: 'Mileage (km)',
+      cost: 'Cost',
+    },
   },
   {
     sheetName: '2024',
     rows: [
-      { sheetRow: 1, pump_date: '2024-01-01', petrol_l: 42.0, mileage_km: 520.0, cost: 84.0, valid: true },
+      {
+        sheetRow: 1,
+        pump_date: '2024-01-01',
+        petrol_l: 42.0,
+        mileage_km: 520.0,
+        cost: 84.0,
+        valid: true,
+      },
     ],
-    detectedColumns: { pumpDate: 'Pump Date', petrolL: 'Petrol (L)', mileageKm: 'Mileage (km)', cost: 'Cost' },
+    detectedColumns: {
+      pumpDate: 'Pump Date',
+      petrolL: 'Petrol (L)',
+      mileageKm: 'Mileage (km)',
+      cost: 'Cost',
+    },
   },
 ];
 
@@ -79,12 +99,8 @@ const MOCK_IMPORT_RESULT = { inserted: 2, skipped: 0, errors: [] };
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 async function setupImportMocks(page: Page, parseResult = MOCK_PARSE_RESULT) {
-  await page.route('**/api/admin/parse-import', (route) =>
-    route.fulfill({ json: parseResult }),
-  );
-  await page.route('**/api/import', (route) =>
-    route.fulfill({ json: MOCK_IMPORT_RESULT }),
-  );
+  await page.route('**/api/admin/parse-import', (route) => route.fulfill({ json: parseResult }));
+  await page.route('**/api/import', (route) => route.fulfill({ json: MOCK_IMPORT_RESULT }));
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -223,10 +239,7 @@ test.describe('file upload and import flow (requires ≥1 vehicle)', () => {
 
 test.describe('multi-sheet import', () => {
   test('shows sheet tabs and "import all" button for multi-sheet file', async ({ page }) => {
-    await setupImportMocks(
-      page,
-      MOCK_PARSE_MULTI_SHEET,
-    );
+    await setupImportMocks(page, MOCK_PARSE_MULTI_SHEET);
     await page.goto('/admin/import');
     await page.waitForLoadState('domcontentloaded');
     const hasVehicle = await page.getByTestId('vehicle-select').isVisible();
@@ -275,7 +288,9 @@ test.describe('"+ Add vehicle" in import wizard', () => {
       page.getByPlaceholder('Display name (required, e.g. My Honda City)'),
     ).toBeVisible();
 
-    await page.getByPlaceholder('Display name (required, e.g. My Honda City)').fill('New Import Car');
+    await page
+      .getByPlaceholder('Display name (required, e.g. My Honda City)')
+      .fill('New Import Car');
     await page.getByRole('button', { name: 'Create vehicle' }).click();
 
     // The new vehicle should appear in the selector

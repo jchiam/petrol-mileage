@@ -12,6 +12,7 @@ jobs:
 
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      PROXY_SECRET: ${{ secrets.PROXY_SECRET }}
 
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +36,12 @@ jobs:
 
       - name: Unit tests
         run: npm run test
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: E2e tests
+        run: npm run test:e2e
 
       - name: Build
         if: env.DATABASE_URL != ''

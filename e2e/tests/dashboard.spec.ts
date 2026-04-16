@@ -9,8 +9,8 @@
  */
 import { expect, test } from '@playwright/test';
 
-import { makeFillRow, makeStats } from '../mocks';
 import { setupStatsMock, setupVoidMock } from '../helpers/routes';
+import { makeFillRow, makeStats } from '../mocks';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
-import { config as loadEnv } from 'dotenv';
 import { defineConfig, devices } from '@playwright/test';
+import { config as loadEnv } from 'dotenv';
 
 // Load .env.local so PROXY_SECRET is available for the x-caddy-auth header.
 // Next.js loads this automatically for the dev server; Playwright does not.
@@ -25,5 +25,6 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
+    timeout: 120_000, // CI cold-starts Next.js slower than local
   },
 });
