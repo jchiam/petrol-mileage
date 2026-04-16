@@ -7,7 +7,7 @@
 petrol.your-tailnet-hostname {
     tls internal
 
-    reverse_proxy https://your-project.vercel.app {
+    reverse_proxy https://petrol-mileage.vercel.app {
         header_up Host {upstream_hostport}
         header_up X-Caddy-Auth {env.CADDY_PROXY_SECRET}
         # Strip forwarding headers — all traffic originates from this NAS
