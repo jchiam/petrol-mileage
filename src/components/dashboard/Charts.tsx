@@ -64,9 +64,7 @@ export default function Charts({ charts }: { charts: ChartData }) {
             />
             <Tooltip
               labelFormatter={(l) => fmtFillDate(String(l))}
-              formatter={(v, name) =>
-                [`${Number(v ?? 0).toFixed(2)}`, name as string]
-              }
+              formatter={(v, name) => [`${Number(v ?? 0).toFixed(2)}`, name as string]}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
             <Line
