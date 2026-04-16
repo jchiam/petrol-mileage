@@ -106,7 +106,7 @@ npm run test:e2e      # run Playwright e2e tests (requires dev server)
 
 Unit tests cover all stats math: KPI computation, anomaly detection (efficiency >2σ, price >15% above median), forecast bounds, rolling averages, and chart series grouping.
 
-E2e tests cover the dashboard, log entry, import, and navigation flows.
+E2E tests cover the dashboard, log entry, import, and navigation flows.
 
 ---
 
