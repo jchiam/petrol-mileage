@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
       PROXY_SECRET: ${{ secrets.PROXY_SECRET }}
 
     steps:
@@ -37,31 +36,49 @@ jobs:
       - name: Unit tests
         run: npm run test
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost/ci' }}
 
-      - name: Build for E2E
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+  e2e:
+    name: E2E tests
+    needs: ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
         run: npm run build
         env:
           # Neon client initialises at import time; a syntactically valid URL
           # avoids a sync throw. No real DB is used — all API calls are mocked.
           DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost/ci' }}
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
       - name: E2E tests
         run: npm run test:e2e
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost/ci' }}
-
-      - name: Build
-        if: env.DATABASE_URL != ''
-        run: npm run build
-
-      - name: Dependency audit
-        run: npm audit --audit-level=high
+          PROXY_SECRET: ${{ secrets.PROXY_SECRET }}
 
   deploy:
     name: Deploy to Vercel
-    needs: ci
+    needs: [ci, e2e]
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     runs-on: ubuntu-latest
 
