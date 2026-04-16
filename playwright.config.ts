@@ -25,7 +25,9 @@ export default defineConfig({
     // CI: build is run beforehand; `next start` is instant and avoids the
     // dev-mode cold-compilation timeout. Locally, dev server is preferred.
     command: process.env.CI ? 'npm start' : 'npm run dev',
-    url: 'http://localhost:3000',
+    // Use port (TCP) not url (HTTP) — the middleware rejects requests without
+    // x-caddy-auth, so an HTTP health check never returns 200 and times out.
+    port: 3000,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
   },
