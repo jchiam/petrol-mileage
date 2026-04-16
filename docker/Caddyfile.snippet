@@ -1,13 +1,18 @@
 # Petrol Mileage Tracker — import this into your main Caddyfile
 # Usage: import /path/to/docker/Caddyfile.snippet
 # Replace petrol.your-tailnet-hostname with your actual Tailscale hostname.
+# Set CADDY_PROXY_SECRET in Caddy's environment; set the same value as
+# PROXY_SECRET in Vercel environment variables (Settings → Environment Variables).
 
 petrol.your-tailnet-hostname {
     tls internal
 
-    header_up X-Real-IP {remote_host}
-    header_up X-Forwarded-For {remote_host}
-    header_up X-Forwarded-Proto {scheme}
-
-    reverse_proxy 127.0.0.1:3000
+    reverse_proxy https://your-project.vercel.app {
+        header_up Host {upstream_hostport}
+        header_up X-Caddy-Auth {env.CADDY_PROXY_SECRET}
+        # Strip forwarding headers — all traffic originates from this NAS
+        header_up -X-Real-IP
+        header_up -X-Forwarded-For
+        header_up -X-Forwarded-Proto
+    }
 }
