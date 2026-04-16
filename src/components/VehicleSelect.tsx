@@ -44,7 +44,7 @@ export function VehicleSelect({
   const label = selected ? selected.name + (!selected.isActive ? ' (retired)' : '') : '—';
 
   return (
-    <div className={`relative ${className ?? ''}`} ref={ref}>
+    <div className={`relative ${className ?? ''}`} data-testid="vehicle-select" ref={ref}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

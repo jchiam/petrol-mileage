@@ -1,0 +1,271 @@
+/**
+ * Dashboard e2e tests.
+ *
+ * The stats API is fully mocked — assertions are deterministic regardless of
+ * real fill data. The server-rendered vehicle list comes from the dev DB;
+ * tests that depend on the dashboard rendering (not the empty state) require
+ * at least one vehicle in the database. Tests skip automatically when the
+ * empty-state screen is detected.
+ */
+import { expect, test } from '@playwright/test';
+
+import { makeFillRow, makeStats } from '../mocks';
+import { setupStatsMock, setupVoidMock } from '../helpers/routes';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Navigate to dashboard and wait for KPI tiles. Skips if no vehicles in DB. */
+async function loadDashboard(page: Parameters<typeof setupStatsMock>[0], stats = makeStats()) {
+  await setupStatsMock(page, stats);
+  await page.goto('/');
+  // Either KPI tiles appear (vehicles in DB) or the empty state does
+  await Promise.race([
+    page.getByText('Latest km/L').waitFor({ timeout: 10_000 }),
+    page.getByText('No vehicles set up yet').waitFor({ timeout: 10_000 }),
+  ]);
+  const isEmpty = await page.getByText('No vehicles set up yet').isVisible();
+  return { isEmpty };
+}
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
+
+test('empty state shows prompt when no vehicles', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForLoadState('domcontentloaded');
+  const isEmpty = await page.getByText('No vehicles set up yet').isVisible();
+  if (!isEmpty) {
+    test.skip(true, 'DB has vehicles — empty state not visible');
+    return;
+  }
+  await expect(page.getByRole('link', { name: /Import/ })).toBeVisible();
+});
+
+// ─── KPI tiles ────────────────────────────────────────────────────────────────
+
+test.describe('KPI tiles', () => {
+  test('tile labels visible', async ({ page }) => {
+    const { isEmpty } = await loadDashboard(page);
+    test.skip(isEmpty, 'No vehicles in dev DB');
+
+    await expect(page.getByText('Latest km/L')).toBeVisible();
+    await expect(page.getByText('30-day avg km/L')).toBeVisible();
+    await expect(page.getByText('Latest $/km')).toBeVisible();
+    await expect(page.getByText('MTD spend')).toBeVisible();
+  });
+
+  test('values from mock stats', async ({ page }) => {
+    const { isEmpty } = await loadDashboard(page);
+    test.skip(isEmpty, 'No vehicles in dev DB');
+
+    // Mock returns latestKmPerL: 12.5, mtdSpend: 240.0
+    await expect(page.getByText('12.50')).toBeVisible();
+    await expect(page.getByText('$240.00')).toBeVisible();
+  });
+});
+
+// ─── Forecast card ────────────────────────────────────────────────────────────
+
+test('forecast card renders with expected value', async ({ page }) => {
+  const { isEmpty } = await loadDashboard(page);
+  test.skip(isEmpty, 'No vehicles in dev DB');
+
+  await expect(page.getByText('Next month')).toBeVisible();
+  await expect(page.getByText('$310.00')).toBeVisible();
+  await expect(page.getByText('Annual projection')).toBeVisible();
+  await expect(page.getByText('$3720.00')).toBeVisible();
+});
+
+// ─── Fills table ──────────────────────────────────────────────────────────────
+
+test.describe('fills table', () => {
+  test('table headers and non-voided row visible', async ({ page }) => {
+    const fill = makeFillRow({ id: 1, pumpDate: '2024-01-15' });
+    const { isEmpty } = await loadDashboard(page, makeStats([fill]));
+    test.skip(isEmpty, 'No vehicles in dev DB');
+
+    await expect(page.getByRole('table')).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Date' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'km/L' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Cost' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Void & re-enter' })).toBeVisible();
+  });
+
+  test('voided fills hidden by default', async ({ page }) => {
+    const fills = [
+      makeFillRow({ id: 1, pumpDate: '2024-01-15', voidedAt: null }),
+      makeFillRow({ id: 2, pumpDate: '2024-01-01', voidedAt: '2024-01-02T00:00:00.000Z' }),
+    ];
+    const { isEmpty } = await loadDashboard(page, makeStats(fills));
+    test.skip(isEmpty, 'No vehicles in dev DB');
+
+    // Only 1 void button (for the non-voided row)
+    await expect(page.getByRole('button', { name: 'Void & re-enter' })).toHaveCount(1);
+    await expect(page.getByText('voided')).not.toBeVisible();
+  });
+
+  test('voided fills shown when checkbox checked', async ({ page }) => {
+    const fills = [
+      makeFillRow({ id: 1, pumpDate: '2024-01-15', voidedAt: null }),
+      makeFillRow({ id: 2, pumpDate: '2024-01-01', voidedAt: '2024-01-02T00:00:00.000Z' }),
+    ];
+    const { isEmpty } = await loadDashboard(page, makeStats(fills));
+    test.skip(isEmpty, 'No vehicles in dev DB');
+
+    await page.getByLabel('Include voided rows').check();
+    await expect(page.getByText('voided')).toBeVisible();
+  });
+
+  test('efficiency anomaly dot visible for flagged fill', async ({ page }) => {
+    const fill = makeFillRow({
+      id: 1,
+      anomalies: [
+        {
+          type: 'efficiency',
+          message: 'km/L of 5.0 is 3.2σ below recent average of 12.0',
+          zScore: -3.2,
+          mean: 12,
+        },
+      ],
+    });
+    const { isEmpty } = await loadDashboard(page, makeStats([fill]));
+    test.skip(isEmpty, 'No vehicles in dev DB');
+
+    // AnomalyDot has aria-label matching the anomaly message
+    await expect(page.locator('[aria-label*="km/L of"]')).toBeVisible();
+  });
+});
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+test.describe('pagination', () => {
+  // Generate 30 fills across Jan and Feb 2024
+  function make30Fills() {
+    return Array.from({ length: 30 }, (_, i) => {
+      const month = Math.floor(i / 28) + 1;
+      const day = (i % 28) + 1;
+      return makeFillRow({
+        id: i + 1,
+        pumpDate: `2024-0${month}-${String(day).padStart(2, '0')}`,
+      });
+    });
+  }
+
+  test('prev disabled on page 1, next enabled', async ({ page }) => {
+    const { isEmpty } = await loadDashboard(page, makeStats(make30Fills()));
+    test.skip(isEmpty, 'No vehicles in dev DB');
+
+    const prev = page.getByRole('button', { name: '← Prev' });
+    const next = page.getByRole('button', { name: 'Next →' });
+    await expect(prev).toBeDisabled();
+    await expect(next).toBeEnabled();
+  });
+
+  test('navigating to page 2 enables prev, disables next', async ({ page }) => {
+    const { isEmpty } = await loadDashboard(page, makeStats(make30Fills()));
+    test.skip(isEmpty, 'No vehicles in dev DB');
+
+    await page.getByRole('button', { name: 'Next →' }).click();
+    await expect(page.getByRole('button', { name: '← Prev' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Next →' })).toBeDisabled();
+  });
+});
+
+// ─── Vehicle selector ─────────────────────────────────────────────────────────
+
+test.describe('vehicle selector', () => {
+  test('dropdown opens and closes on outside click', async ({ page }) => {
+    const { isEmpty } = await loadDashboard(page);
+    test.skip(isEmpty, 'No vehicles in dev DB');
+
+    const vehicleSelect = page.getByTestId('vehicle-select');
+    await vehicleSelect.locator('button').first().click();
+
+    // Dropdown (absolutely positioned list) should be visible
+    await expect(vehicleSelect.locator('div[class*="absolute"]')).toBeVisible();
+
+    // Click outside to close
+    await page.mouse.click(10, 10);
+    await expect(vehicleSelect.locator('div[class*="absolute"]')).not.toBeAttached();
+  });
+
+  test('selecting same vehicle still shows dashboard content', async ({ page }) => {
+    const { isEmpty } = await loadDashboard(page);
+    test.skip(isEmpty, 'No vehicles in dev DB');
+
+    const vehicleSelect = page.getByTestId('vehicle-select');
+    await vehicleSelect.locator('button').first().click();
+
+    // Click the first vehicle option button (the name button, not the star)
+    await vehicleSelect
+      .locator('div[class*="absolute"]')
+      .locator('button[class*="flex-1"]')
+      .first()
+      .click();
+
+    // Dashboard content still visible
+    await expect(page.getByText('Latest km/L')).toBeVisible({ timeout: 5_000 });
+  });
+});
+
+// ─── Compare tab ──────────────────────────────────────────────────────────────
+
+test('compare tab shows lifetime stats table', async ({ page }) => {
+  // Mock all stats requests (compare tab fetches stats for every vehicle)
+  await page.route('**/api/fills/stats*', (route) => route.fulfill({ json: makeStats() }));
+  await page.goto('/');
+  await page.waitForLoadState('domcontentloaded');
+
+  const isEmpty = await page.getByText('No vehicles set up yet').isVisible();
+  test.skip(isEmpty, 'No vehicles in dev DB');
+
+  await page.getByRole('button', { name: 'Compare vehicles' }).click();
+  await expect(page.getByText('All vehicles — lifetime')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole('columnheader', { name: 'Vehicle' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'km/L (lifetime)' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Total spend' })).toBeVisible();
+});
+
+// ─── Set current vehicle ──────────────────────────────────────────────────────
+
+test('star button calls set-current API (needs ≥2 vehicles)', async ({ page }) => {
+  // Mock the set-current endpoint — we don't know the vehicle ID in advance
+  let setCurrCalled = false;
+  await page.route('**/api/vehicles/*/set-current', (route) => {
+    setCurrCalled = true;
+    return route.fulfill({ status: 200, json: {} });
+  });
+  await setupStatsMock(page, makeStats());
+  await page.goto('/');
+  await page.waitForLoadState('domcontentloaded');
+
+  const isEmpty = await page.getByText('No vehicles set up yet').isVisible();
+  test.skip(isEmpty, 'No vehicles in dev DB');
+
+  const vehicleSelect = page.getByTestId('vehicle-select');
+  await vehicleSelect.locator('button').first().click();
+
+  // Find a non-current star button (title = "Set as current car")
+  const nonCurrentStar = vehicleSelect
+    .locator('div[class*="absolute"]')
+    .locator('button[title="Set as current car"]')
+    .first();
+
+  const hasNonCurrentVehicle = await nonCurrentStar.isVisible();
+  test.skip(!hasNonCurrentVehicle, 'Need ≥2 vehicles to test set-current');
+
+  await nonCurrentStar.click();
+  expect(setCurrCalled).toBe(true);
+});
+
+// ─── Void fill-up ─────────────────────────────────────────────────────────────
+// (Detailed void-dialog tests live in dashboard-void.spec.ts)
+
+test('void dialog opens from fills table', async ({ page }) => {
+  const fill = makeFillRow({ id: 99 });
+  await setupVoidMock(page, 99);
+  const { isEmpty } = await loadDashboard(page, makeStats([fill]));
+  test.skip(isEmpty, 'No vehicles in dev DB');
+
+  await page.getByRole('button', { name: 'Void & re-enter' }).click();
+  await expect(page.getByRole('heading', { name: 'Void fill-up' })).toBeVisible();
+});

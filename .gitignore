@@ -27,3 +27,8 @@ yarn-error.log*
 
 # Backups (runtime, not source-controlled)
 backups/
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/

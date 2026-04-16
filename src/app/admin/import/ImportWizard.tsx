@@ -413,6 +413,7 @@ export function ImportWizard({ vehicles: initialVehicles }: { vehicles: VehicleO
       {step === 'upload' && (
         <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div
+            data-testid="upload-zone"
             onDrop={parsing ? undefined : onDrop}
             onDragOver={(e) => e.preventDefault()}
             onClick={() => !parsing && fileInputRef.current?.click()}
