@@ -1,12 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface VehicleData {
   id: number;
   name: string;
-  isCurrent: boolean;
 }
 
 interface ConfirmedFill {
@@ -34,9 +33,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export function LogForm() {
-  const [vehicleLoading, setVehicleLoading] = useState(true);
-  const [currentVehicle, setCurrentVehicle] = useState<VehicleData | null>(null);
+export function LogForm({ currentVehicle }: { currentVehicle: VehicleData | null }) {
   const [date, setDate] = useState(todayString);
   const [petrolL, setPetrolL] = useState('');
   const [mileageKm, setMileageKm] = useState('');
@@ -44,23 +41,6 @@ export function LogForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<ConfirmedFill | null>(null);
-
-  useEffect(() => {
-    fetch('/api/vehicles')
-      .then((r) => r.json())
-      .then((data: VehicleData[]) => {
-        setCurrentVehicle(data.find((v) => v.isCurrent) ?? null);
-      })
-      .finally(() => setVehicleLoading(false));
-  }, []);
-
-  if (vehicleLoading) {
-    return (
-      <div className="flex justify-center py-20">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-800" />
-      </div>
-    );
-  }
 
   if (!currentVehicle) {
     return (

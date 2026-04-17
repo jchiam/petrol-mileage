@@ -1,9 +1,9 @@
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, isNull } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { db } from '@/db';
-import { fillUps, vehicles } from '@/db/schema';
+import { fillUps } from '@/db/schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,12 +77,6 @@ export async function POST(req: NextRequest) {
   }
   if (isNaN(costNum) || costNum <= 0) {
     return NextResponse.json({ error: 'cost must be a positive number' }, { status: 400 });
-  }
-
-  // Verify vehicle exists
-  const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, vehicleId)).limit(1);
-  if (!vehicle) {
-    return NextResponse.json({ error: 'vehicle not found' }, { status: 404 });
   }
 
   const [fill] = await db
