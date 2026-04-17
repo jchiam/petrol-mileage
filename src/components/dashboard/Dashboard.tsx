@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { VehicleSelect } from '../VehicleSelect';
 import { CompareTab } from './CompareTab';
@@ -13,29 +13,20 @@ import type { StatsData, VehicleRow } from './types';
 // Charts use Recharts which is browser-only
 const Charts = dynamic(() => import('./Charts'), { ssr: false });
 
-export function Dashboard() {
-  const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
-  const [vehiclesLoading, setVehiclesLoading] = useState(true);
-  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
-  const [statsData, setStatsData] = useState<StatsData | null>(null);
+interface DashboardProps {
+  initialVehicles: VehicleRow[];
+  initialVehicleId: number | null;
+  initialStatsData: StatsData | null;
+}
+
+export function Dashboard({ initialVehicles, initialVehicleId, initialStatsData }: DashboardProps) {
+  const [vehicles, setVehicles] = useState<VehicleRow[]>(initialVehicles);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(initialVehicleId);
+  const [statsData, setStatsData] = useState<StatsData | null>(initialStatsData);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'overview' | 'compare'>('overview');
   const [voidedMessage, setVoidedMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch('/api/vehicles')
-      .then((r) => r.json())
-      .then((data: VehicleRow[]) => setVehicles(data))
-      .finally(() => setVehiclesLoading(false));
-  }, []);
-
-  useEffect(() => {
-    if (vehicles.length > 0 && selectedVehicleId === null) {
-      const cur =
-        vehicles.find((v) => v.isCurrent) ?? vehicles.find((v) => v.isActive) ?? vehicles[0];
-      setSelectedVehicleId(cur?.id ?? null);
-    }
-  }, [vehicles, selectedVehicleId]);
+  const skipInitialFetch = useRef(true);
 
   const fetchStats = useCallback(async (vehicleId: number) => {
     setLoading(true);
@@ -49,6 +40,10 @@ export function Dashboard() {
   }, []);
 
   useEffect(() => {
+    if (skipInitialFetch.current) {
+      skipInitialFetch.current = false;
+      return;
+    }
     if (selectedVehicleId != null) fetchStats(selectedVehicleId);
   }, [selectedVehicleId, fetchStats]);
 
@@ -62,14 +57,6 @@ export function Dashboard() {
       setVehicles((prev) => prev.map((v) => ({ ...v, isCurrent: v.id === id })));
     }
   };
-
-  if (vehiclesLoading) {
-    return (
-      <div className="flex justify-center py-20">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-800" />
-      </div>
-    );
-  }
 
   if (vehicles.length === 0) {
     return (

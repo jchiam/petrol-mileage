@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import type { FillRow, StatsData, VehicleRow } from './types';
+import type { VehicleRow } from './types';
 
 interface LifetimeStats {
   fillCount: number;
@@ -11,21 +11,6 @@ interface LifetimeStats {
   totalL: number;
   kmPerL: number | null;
   costPerKm: number | null;
-}
-
-function computeLifetime(fills: FillRow[]): LifetimeStats {
-  const active = fills.filter((f) => !f.voidedAt);
-  const totalSpend = active.reduce((s, f) => s + parseFloat(f.cost), 0);
-  const totalKm = active.reduce((s, f) => s + parseFloat(f.mileageKm), 0);
-  const totalL = active.reduce((s, f) => s + parseFloat(f.petrolL), 0);
-  return {
-    fillCount: active.length,
-    totalSpend,
-    totalKm,
-    totalL,
-    kmPerL: totalL > 0 ? totalKm / totalL : null,
-    costPerKm: totalKm > 0 ? totalSpend / totalKm : null,
-  };
 }
 
 function fmt(n: number | null, prefix = '', dp = 2): string {
@@ -47,12 +32,9 @@ export function CompareTab({ initialVehicles }: { initialVehicles: VehicleRow[] 
 
     Promise.all(
       initialVehicles.map((v) =>
-        fetch(`/api/fills/stats?vehicle_id=${v.id}`)
-          .then((r) => r.json() as Promise<StatsData>)
-          .then((data) => ({
-            vehicle: v,
-            stats: computeLifetime(data.fillsWithAnomalies),
-          })),
+        fetch(`/api/fills/lifetime?vehicle_id=${v.id}`)
+          .then((r) => r.json() as Promise<LifetimeStats>)
+          .then((stats) => ({ vehicle: v, stats })),
       ),
     )
       .then((results) => {
