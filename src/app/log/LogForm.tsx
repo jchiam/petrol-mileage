@@ -171,6 +171,7 @@ export function LogForm() {
           <input
             id="log-petrol"
             type="number"
+            inputMode="decimal"
             step="any"
             min="0"
             placeholder="0.000"
@@ -197,6 +198,7 @@ export function LogForm() {
           <input
             id="log-mileage"
             type="number"
+            inputMode="decimal"
             step="any"
             min="0"
             placeholder="0.0"
@@ -226,6 +228,7 @@ export function LogForm() {
           <input
             id="log-cost"
             type="number"
+            inputMode="decimal"
             step="any"
             min="0"
             placeholder="0.00"
