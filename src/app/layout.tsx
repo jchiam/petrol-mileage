@@ -1,6 +1,7 @@
 import './globals.css';
 
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 
 import { AppNav } from '@/components/AppNav';
 
@@ -35,6 +36,13 @@ export default function RootLayout({
       <body>
         <AppNav />
         {children}
+        <Script
+          id="sw-register"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }`,
+          }}
+        />
       </body>
     </html>
   );
