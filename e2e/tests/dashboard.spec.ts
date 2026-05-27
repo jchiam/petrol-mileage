@@ -6,23 +6,24 @@
  */
 import { expect, test } from '@playwright/test';
 
-import { setupStatsMock, setupVehiclesMock, setupVoidMock } from '../helpers/routes';
+import { setupDashboardState, setupStatsMock, setupVehiclesMock, setupVoidMock } from '../helpers/routes';
 import { makeFillRow, makeStats, makeVehicle } from '../mocks';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Navigate to dashboard and wait for KPI tiles. */
+/** Navigate to dashboard and wait for mock state to be applied. */
 async function loadDashboard(page: Parameters<typeof setupStatsMock>[0], stats = makeStats()) {
-  await setupVehiclesMock(page, [makeVehicle()]);
+  await setupDashboardState(page, { vehicles: [makeVehicle()], stats });
   await setupStatsMock(page, stats);
   await page.goto('/');
-  await page.getByText('Latest km/L').waitFor({ timeout: 10_000 });
+  // 'Test Car' only appears after window.__PLAYWRIGHT_DASHBOARD override takes effect
+  await page.getByText('Test Car').waitFor({ timeout: 10_000 });
 }
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
 test('empty state shows prompt when no vehicles', async ({ page }) => {
-  await setupVehiclesMock(page, []);
+  await setupDashboardState(page, { vehicles: [], stats: null });
   await page.goto('/');
   await page.getByText('No vehicles set up yet').waitFor({ timeout: 10_000 });
   await expect(page.getByRole('link', { name: 'Import historical data' })).toBeVisible();
@@ -189,11 +190,22 @@ test.describe('vehicle selector', () => {
 // ─── Compare tab ──────────────────────────────────────────────────────────────
 
 test('compare tab shows lifetime stats table', async ({ page }) => {
-  // Mock all stats requests (compare tab fetches stats for every vehicle)
-  await setupVehiclesMock(page, [makeVehicle()]);
-  await page.route('**/api/fills/stats*', (route) => route.fulfill({ json: makeStats() }));
+  await setupDashboardState(page, { vehicles: [makeVehicle()], stats: makeStats() });
+  // CompareTab fetches /api/fills/lifetime per vehicle, not /api/fills/stats
+  await page.route('**/api/fills/lifetime*', (route) =>
+    route.fulfill({
+      json: {
+        fillCount: 1,
+        totalSpend: 240.0,
+        totalKm: 500.0,
+        totalL: 40.0,
+        kmPerL: 12.5,
+        costPerKm: 0.16,
+      },
+    }),
+  );
   await page.goto('/');
-  await page.getByText('Latest km/L').waitFor({ timeout: 10_000 });
+  await page.getByText('Test Car').waitFor({ timeout: 10_000 });
 
   await page.getByRole('button', { name: 'Compare vehicles' }).click();
   await expect(page.getByText('All vehicles — lifetime')).toBeVisible({ timeout: 10_000 });
@@ -209,7 +221,7 @@ test('star button calls set-current API (needs ≥2 vehicles)', async ({ page })
     makeVehicle({ id: 1, name: 'Car One', isCurrent: true }),
     makeVehicle({ id: 2, name: 'Car Two', isCurrent: false }),
   ];
-  await setupVehiclesMock(page, vehicles);
+  await setupDashboardState(page, { vehicles, stats: makeStats() });
   await setupStatsMock(page, makeStats());
 
   // Mock the set-current endpoint
@@ -220,7 +232,7 @@ test('star button calls set-current API (needs ≥2 vehicles)', async ({ page })
   });
 
   await page.goto('/');
-  await page.getByText('Latest km/L').waitFor({ timeout: 10_000 });
+  await page.getByText('Car One').waitFor({ timeout: 10_000 });
 
   const vehicleSelect = page.getByTestId('vehicle-select');
   await vehicleSelect.locator('button').first().click();
@@ -241,6 +253,7 @@ test('star button calls set-current API (needs ≥2 vehicles)', async ({ page })
 test('void dialog opens from fills table', async ({ page }) => {
   const fill = makeFillRow({ id: 99 });
   await setupVoidMock(page, 99);
+  await setupStatsMock(page, makeStats([fill]));
   await loadDashboard(page, makeStats([fill]));
 
   await page.getByRole('button', { name: 'Void & re-enter' }).click();

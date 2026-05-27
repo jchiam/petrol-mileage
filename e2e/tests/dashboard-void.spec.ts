@@ -5,7 +5,7 @@
  */
 import { expect, test } from '@playwright/test';
 
-import { setupStatsMock, setupVehiclesMock, setupVoidMock } from '../helpers/routes';
+import { setupDashboardState, setupStatsMock, setupVehiclesMock, setupVoidMock } from '../helpers/routes';
 import { makeFillRow, makeStats, makeVehicle } from '../mocks';
 
 const FILL_ID = 99;
@@ -13,11 +13,12 @@ const FILL_ID = 99;
 test.describe('void dialog', () => {
   test.beforeEach(async ({ page }) => {
     const fill = makeFillRow({ id: FILL_ID, pumpDate: '2024-01-15' });
-    await setupVehiclesMock(page, [makeVehicle()]);
+    await setupDashboardState(page, { vehicles: [makeVehicle()], stats: makeStats([fill]) });
     await setupStatsMock(page, makeStats([fill]));
     await setupVoidMock(page, FILL_ID);
     await page.goto('/');
-    await page.getByText('Latest km/L').waitFor({ timeout: 10_000 });
+    // 'Test Car' only appears after window.__PLAYWRIGHT_DASHBOARD override takes effect
+    await page.getByText('Test Car').waitFor({ timeout: 10_000 });
   });
 
   test('clicking void button opens dialog with fill details', async ({ page }) => {

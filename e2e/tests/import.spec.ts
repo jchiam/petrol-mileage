@@ -118,7 +118,7 @@ test.describe('create vehicle form (no vehicles)', () => {
 
   test('create vehicle form submit calls POST /api/vehicles', async ({ page }) => {
     await setupVehiclesMock(page, []);
-    await page.goto('/admin/import');
+    await page.goto('/admin/import', { waitUntil: 'networkidle' });
     await expect(page.getByPlaceholder('Display name (required, e.g. My Honda City)')).toBeVisible({
       timeout: 10_000,
     });

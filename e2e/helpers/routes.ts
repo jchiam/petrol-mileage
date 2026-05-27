@@ -2,6 +2,22 @@ import type { Page } from '@playwright/test';
 
 import type { StatsData, VehicleData } from '../mocks';
 
+interface LogPageVehicle {
+  id: number;
+  name: string;
+}
+
+/** Inject deterministic state into Dashboard via window.__PLAYWRIGHT_DASHBOARD.
+ *  Must be called before page.goto() — addInitScript runs before any page scripts. */
+export async function setupDashboardState(
+  page: Page,
+  state: { vehicles?: VehicleData[]; stats?: StatsData | null },
+): Promise<void> {
+  await page.addInitScript((s) => {
+    (window as any).__PLAYWRIGHT_DASHBOARD = s;
+  }, state);
+}
+
 /** Mock all /api/fills/stats?vehicle_id=* requests with the given stats payload. */
 export async function setupStatsMock(page: Page, stats: StatsData): Promise<void> {
   await page.route('**/api/fills/stats*', (route) => route.fulfill({ json: stats }));
@@ -19,6 +35,17 @@ export async function setupVoidMock(
       json: responseBody ?? { id: fillId, voidedAt: new Date().toISOString(), voidReason: 'test' },
     }),
   );
+}
+
+/** Inject deterministic state into the log page via window.__PLAYWRIGHT_LOG_PAGE.
+ *  Must be called before page.goto() — addInitScript runs before any page scripts. */
+export async function setupLogPageState(
+  page: Page,
+  state: { currentVehicle?: LogPageVehicle | null },
+): Promise<void> {
+  await page.addInitScript((s) => {
+    (window as any).__PLAYWRIGHT_LOG_PAGE = s;
+  }, state);
 }
 
 /** Mock GET /api/vehicles. POST requests pass through to per-test mocks. */

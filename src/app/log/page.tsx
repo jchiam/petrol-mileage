@@ -11,13 +11,17 @@ export const metadata: Metadata = {
 };
 
 export default async function LogPage() {
-  const rows = await db
-    .select({ id: vehicles.id, name: vehicles.name })
-    .from(vehicles)
-    .where(eq(vehicles.isCurrent, true))
-    .limit(1);
-
-  const currentVehicle = rows[0] ?? null;
+  let currentVehicle: { id: number; name: string } | null = null;
+  try {
+    const rows = await db
+      .select({ id: vehicles.id, name: vehicles.name })
+      .from(vehicles)
+      .where(eq(vehicles.isCurrent, true))
+      .limit(1);
+    currentVehicle = rows[0] ?? null;
+  } catch {
+    // DB unavailable — render without current vehicle; client fetch recovers
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

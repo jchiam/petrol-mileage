@@ -5,7 +5,7 @@
  */
 import { expect, test } from '@playwright/test';
 
-import { setupVehiclesMock } from '../helpers/routes';
+import { setupLogPageState, setupVehiclesMock } from '../helpers/routes';
 import { makeVehicle } from '../mocks';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ const MOCK_FILL_RESPONSE = {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 test('no current vehicle shows empty state', async ({ page }) => {
-  await setupVehiclesMock(page, [makeVehicle({ isCurrent: false })]);
+  await setupLogPageState(page, { currentVehicle: null });
   await page.goto('/log');
   await page.getByText('No current vehicle set.').waitFor({ timeout: 10_000 });
   await expect(page.getByText('No current vehicle set.')).toBeVisible();

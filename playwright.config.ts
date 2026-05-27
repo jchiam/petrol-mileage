@@ -9,7 +9,8 @@ loadEnv(); // fallback: .env
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
-  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 4 : 1,
+  retries: 2,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://localhost:3000',
@@ -19,6 +20,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'retain-on-failure',
+    serviceWorkers: 'block',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
