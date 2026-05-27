@@ -1,11 +1,11 @@
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
 
+import { Dashboard } from '@/components/dashboard/Dashboard';
+import type { StatsData, VehicleRow } from '@/components/dashboard/types';
 import { db } from '@/db';
 import { fillUps, vehicles } from '@/db/schema';
 import { computeStats } from '@/lib/stats';
-import { Dashboard } from '@/components/dashboard/Dashboard';
-import type { StatsData, VehicleRow } from '@/components/dashboard/types';
 
 export const metadata: Metadata = {
   title: 'Dashboard — Petrol Tracker',

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 
 import { db } from '@/db';
 import { vehicles } from '@/db/schema';
+
 import { LogForm } from './LogForm';
 
 export const metadata: Metadata = {
