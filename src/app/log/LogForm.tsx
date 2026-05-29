@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface VehicleData {
   id: number;
@@ -33,17 +33,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export function LogForm({ currentVehicle: initialCurrentVehicle }: { currentVehicle: VehicleData | null }) {
-  const [currentVehicle, setCurrentVehicle] = useState(initialCurrentVehicle);
-
-  // Allow Playwright tests to inject deterministic state (e.g. no current vehicle)
-  useEffect(() => {
-    const t =
-      typeof window !== 'undefined'
-        ? (window as any).__PLAYWRIGHT_LOG_PAGE as { currentVehicle?: VehicleData | null } | undefined
-        : undefined;
-    if (t && 'currentVehicle' in t) setCurrentVehicle(t.currentVehicle ?? null);
-  }, []);
+export function LogForm({ currentVehicle }: { currentVehicle: VehicleData | null }) {
   const [date, setDate] = useState(todayString);
   const [petrolL, setPetrolL] = useState('');
   const [mileageKm, setMileageKm] = useState('');

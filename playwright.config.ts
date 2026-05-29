@@ -9,8 +9,8 @@ loadEnv(); // fallback: .env
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
-  workers: process.env.CI ? 4 : 1,
-  retries: 2,
+  workers: 4,
+  retries: 1,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://localhost:3000',
@@ -24,13 +24,18 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    // CI: build is run beforehand; `next start` is instant and avoids the
-    // dev-mode cold-compilation timeout. Locally, dev server is preferred.
-    command: process.env.CI ? 'npm start' : 'npm run dev',
-    // Use port (TCP) not url (HTTP) — the middleware rejects requests without
-    // x-caddy-auth, so an HTTP health check never returns 200 and times out.
+    // Always run against a production build — eliminates Next.js dev-mode
+    // HMR thrash that caused chronic e2e flake. `npm run build` is the
+    // responsibility of the caller (see `test:e2e` script).
+    command: 'npm start',
+    // Use port (TCP) not url (HTTP) — middleware rejects unauthenticated
+    // requests so an HTTP health check times out.
     port: 3000,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
+    env: {
+      // Activates src/lib/test-mocks.ts cookie reader. Never set in production.
+      E2E_MOCKS: '1',
+    },
   },
 });

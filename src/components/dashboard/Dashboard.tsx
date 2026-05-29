@@ -28,25 +28,6 @@ export function Dashboard({ initialVehicles, initialVehicleId, initialStatsData 
   const [voidedMessage, setVoidedMessage] = useState<string | null>(null);
   const skipInitialFetch = useRef(true);
 
-  // Allow Playwright tests to inject deterministic state without a test DB.
-  // page.addInitScript sets window.__PLAYWRIGHT_DASHBOARD before React hydrates.
-  // useEffect (client-only) reads it and overrides the server-rendered initial state.
-  useEffect(() => {
-    const t =
-      typeof window !== 'undefined'
-        ? (window as any).__PLAYWRIGHT_DASHBOARD as
-            | { vehicles?: VehicleRow[]; stats?: StatsData | null }
-            | undefined
-        : undefined;
-    if (!t) return;
-    if (t.vehicles !== undefined) {
-      setVehicles(t.vehicles);
-      const curr = t.vehicles.find((v) => v.isCurrent) ?? t.vehicles[0] ?? null;
-      if (curr) setSelectedVehicleId(curr.id);
-    }
-    if ('stats' in t) setStatsData((t.stats as StatsData | null) ?? null);
-  }, []);
-
   const fetchStats = useCallback(async (vehicleId: number) => {
     setLoading(true);
     setStatsData(null);

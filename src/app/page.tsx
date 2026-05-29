@@ -6,17 +6,28 @@ import type { StatsData, VehicleRow } from '@/components/dashboard/types';
 import { db } from '@/db';
 import { fillUps, vehicles } from '@/db/schema';
 import { computeStats } from '@/lib/stats';
+import { getMockDashboard } from '@/lib/test-mocks';
 
 export const metadata: Metadata = {
   title: 'Dashboard — Petrol Tracker',
 };
 
-export default async function HomePage() {
-  let initialVehicles: VehicleRow[] = [];
-  let initialVehicleId: number | null = null;
-  let initialStatsData: StatsData | null = null;
+// Dashboard data is request-scoped (live DB + per-request mock cookie).
+// Without this, Next.js prerenders at build time with stale data.
+export const dynamic = 'force-dynamic';
 
-  try {
+export default async function HomePage() {
+  const mock = await getMockDashboard();
+
+  let initialVehicles: VehicleRow[];
+  let initialVehicleId: number | null;
+  let initialStatsData: StatsData | null;
+
+  if (mock) {
+    initialVehicles = mock.vehicles;
+    initialVehicleId = mock.vehicleId;
+    initialStatsData = mock.stats;
+  } else {
     const vehicleRows = await db.select().from(vehicles).orderBy(vehicles.name);
 
     // Serialize timestamps — Next.js cannot pass Date objects as server component props
@@ -32,6 +43,7 @@ export default async function HomePage() {
       null;
 
     initialVehicleId = currentVehicle?.id ?? null;
+    initialStatsData = null;
 
     if (currentVehicle) {
       const fills = await db
@@ -62,8 +74,6 @@ export default async function HomePage() {
         })),
       };
     }
-  } catch {
-    // DB unavailable or overloaded — render empty shell; useEffect/client fetches recover
   }
 
   return (

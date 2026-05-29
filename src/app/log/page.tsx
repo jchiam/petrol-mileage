@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 
 import { db } from '@/db';
 import { vehicles } from '@/db/schema';
+import { getMockLogPage } from '@/lib/test-mocks';
 
 import { LogForm } from './LogForm';
 
@@ -10,17 +11,22 @@ export const metadata: Metadata = {
   title: 'Log Fill-Up — Petrol Tracker',
 };
 
+// Current vehicle is request-scoped (live DB + per-request mock cookie).
+export const dynamic = 'force-dynamic';
+
 export default async function LogPage() {
-  let currentVehicle: { id: number; name: string } | null = null;
-  try {
+  const mock = await getMockLogPage();
+
+  let currentVehicle: { id: number; name: string } | null;
+  if (mock) {
+    currentVehicle = mock.currentVehicle;
+  } else {
     const rows = await db
       .select({ id: vehicles.id, name: vehicles.name })
       .from(vehicles)
       .where(eq(vehicles.isCurrent, true))
       .limit(1);
     currentVehicle = rows[0] ?? null;
-  } catch {
-    // DB unavailable — render without current vehicle; client fetch recovers
   }
 
   return (

@@ -7,15 +7,50 @@ interface LogPageVehicle {
   name: string;
 }
 
-/** Inject deterministic state into Dashboard via window.__PLAYWRIGHT_DASHBOARD.
- *  Must be called before page.goto() — addInitScript runs before any page scripts. */
-export async function setupDashboardState(
+interface DashboardMock {
+  vehicles: VehicleData[];
+  vehicleId?: number | null;
+  stats?: StatsData | null;
+}
+
+/** Set Playwright mock cookies so the server component skips its DB query.
+ *  Must be called before page.goto(). Server reads via next/headers and
+ *  honors the cookie only when E2E_MOCKS=1 (set by playwright webServer env). */
+export async function setupDashboardState(page: Page, state: DashboardMock): Promise<void> {
+  const vehicleId =
+    state.vehicleId !== undefined
+      ? state.vehicleId
+      : (state.vehicles.find((v) => v.isCurrent)?.id ??
+        state.vehicles.find((v) => v.isActive)?.id ??
+        state.vehicles[0]?.id ??
+        null);
+  await page.context().addCookies([
+    {
+      name: 'pw-dashboard',
+      value: encodeURIComponent(
+        JSON.stringify({
+          vehicles: state.vehicles,
+          vehicleId,
+          stats: state.stats ?? null,
+        }),
+      ),
+      url: 'http://localhost:3000',
+    },
+  ]);
+}
+
+/** Server-side mock for the log page's current vehicle. */
+export async function setupLogPageState(
   page: Page,
-  state: { vehicles?: VehicleData[]; stats?: StatsData | null },
+  state: { currentVehicle: LogPageVehicle | null },
 ): Promise<void> {
-  await page.addInitScript((s) => {
-    (window as any).__PLAYWRIGHT_DASHBOARD = s;
-  }, state);
+  await page.context().addCookies([
+    {
+      name: 'pw-log',
+      value: encodeURIComponent(JSON.stringify(state)),
+      url: 'http://localhost:3000',
+    },
+  ]);
 }
 
 /** Mock all /api/fills/stats?vehicle_id=* requests with the given stats payload. */
@@ -35,17 +70,6 @@ export async function setupVoidMock(
       json: responseBody ?? { id: fillId, voidedAt: new Date().toISOString(), voidReason: 'test' },
     }),
   );
-}
-
-/** Inject deterministic state into the log page via window.__PLAYWRIGHT_LOG_PAGE.
- *  Must be called before page.goto() — addInitScript runs before any page scripts. */
-export async function setupLogPageState(
-  page: Page,
-  state: { currentVehicle?: LogPageVehicle | null },
-): Promise<void> {
-  await page.addInitScript((s) => {
-    (window as any).__PLAYWRIGHT_LOG_PAGE = s;
-  }, state);
 }
 
 /** Mock GET /api/vehicles. POST requests pass through to per-test mocks. */
