@@ -17,23 +17,70 @@ const MOCK_PARSE_RESULT = [
   {
     sheetName: 'Sheet1',
     rows: [
-      { sheetRow: 1, pump_date: '2024-01-01', petrol_l: 40.0, mileage_km: 500.0, cost: 80.0, valid: true },
-      { sheetRow: 2, pump_date: '2024-01-15', petrol_l: 42.0, mileage_km: 520.0, cost: 84.0, valid: true },
+      {
+        sheetRow: 1,
+        pump_date: '2024-01-01',
+        petrol_l: 40.0,
+        mileage_km: 500.0,
+        cost: 80.0,
+        valid: true,
+      },
+      {
+        sheetRow: 2,
+        pump_date: '2024-01-15',
+        petrol_l: 42.0,
+        mileage_km: 520.0,
+        cost: 84.0,
+        valid: true,
+      },
     ],
-    detectedColumns: { pumpDate: 'Pump Date', petrolL: 'Petrol (L)', mileageKm: 'Mileage (km)', cost: 'Cost' },
+    detectedColumns: {
+      pumpDate: 'Pump Date',
+      petrolL: 'Petrol (L)',
+      mileageKm: 'Mileage (km)',
+      cost: 'Cost',
+    },
   },
 ];
 
 const MOCK_PARSE_MULTI_SHEET = [
   {
     sheetName: '2023',
-    rows: [{ sheetRow: 1, pump_date: '2023-06-01', petrol_l: 40, mileage_km: 500, cost: 80, valid: true }],
-    detectedColumns: { pumpDate: 'Pump Date', petrolL: 'Petrol (L)', mileageKm: 'Mileage (km)', cost: 'Cost' },
+    rows: [
+      {
+        sheetRow: 1,
+        pump_date: '2023-06-01',
+        petrol_l: 40,
+        mileage_km: 500,
+        cost: 80,
+        valid: true,
+      },
+    ],
+    detectedColumns: {
+      pumpDate: 'Pump Date',
+      petrolL: 'Petrol (L)',
+      mileageKm: 'Mileage (km)',
+      cost: 'Cost',
+    },
   },
   {
     sheetName: '2024',
-    rows: [{ sheetRow: 1, pump_date: '2024-01-01', petrol_l: 42, mileage_km: 520, cost: 84, valid: true }],
-    detectedColumns: { pumpDate: 'Pump Date', petrolL: 'Petrol (L)', mileageKm: 'Mileage (km)', cost: 'Cost' },
+    rows: [
+      {
+        sheetRow: 1,
+        pump_date: '2024-01-01',
+        petrol_l: 42,
+        mileage_km: 520,
+        cost: 84,
+        valid: true,
+      },
+    ],
+    detectedColumns: {
+      pumpDate: 'Pump Date',
+      petrolL: 'Petrol (L)',
+      mileageKm: 'Mileage (km)',
+      cost: 'Cost',
+    },
   },
 ];
 
@@ -104,9 +151,7 @@ test('"+ Add vehicle" creates vehicle and selects it', async ({ page }) => {
   });
 
   await page.getByRole('button', { name: '+ Add vehicle' }).click();
-  await page
-    .getByPlaceholder('Display name (required, e.g. My Honda City)')
-    .fill('New Import Car');
+  await page.getByPlaceholder('Display name (required, e.g. My Honda City)').fill('New Import Car');
   await page.getByRole('button', { name: 'Create vehicle' }).click();
 
   await expect(page.getByTestId('vehicle-select')).toContainText('New Import Car');
