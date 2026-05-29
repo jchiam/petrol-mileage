@@ -48,14 +48,13 @@ jobs:
     name: E2E tests
     needs: ci
     runs-on: ubuntu-latest
+    # Pre-installed Chromium + system deps. Version must match @playwright/test
+    # in package.json — bump together.
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
 
     steps:
       - uses: actions/checkout@v6
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -67,11 +66,9 @@ jobs:
           # avoids a sync throw. No real DB is used — all API calls are mocked.
           DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost/ci' }}
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
       - name: E2E tests
-        run: npm run test:e2e
+        # Skip `npm run test:e2e` because its pretest hook re-runs `next build`.
+        run: npx playwright test
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost/ci' }}
           PROXY_SECRET: ${{ secrets.PROXY_SECRET }}
