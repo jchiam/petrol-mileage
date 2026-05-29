@@ -32,3 +32,8 @@ backups/
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+# Serwist build output
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js
