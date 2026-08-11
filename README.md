@@ -2,23 +2,24 @@
 
 Self-hosted petrol mileage tracker. Replaces an Excel-based tracker with a web app covering a dashboard with trends and forecasts, and a mobile-optimised entry screen bookmarkable on a phone.
 
-Runs on a UGREEN NAS via Docker Compose, accessible over Tailscale only.
+Hosted on Vercel with a Neon PostgreSQL database, fronted by a Caddy reverse proxy on a UGREEN NAS so it is accessible over Tailscale only.
 
 ---
 
 ## Tech Stack
 
-| Layer         | Choice                                          |
-| ------------- | ----------------------------------------------- |
-| Framework     | Next.js 15 (App Router, TypeScript strict)      |
-| Database      | Postgres 16 (alpine, Docker)                    |
-| ORM           | Drizzle ORM                                     |
-| Styling       | Tailwind CSS v4                                 |
-| UI primitives | shadcn/ui                                       |
-| Charts        | Recharts                                        |
-| Tests         | Vitest (unit), Playwright (e2e)                 |
-| Runtime       | Node.js 24 (Docker, non-root `nextjs` uid 1001) |
-| Reverse proxy | Caddy (`tls internal`, Tailscale-gated)         |
+| Layer         | Choice                                            |
+| ------------- | ------------------------------------------------- |
+| Framework     | Next.js 15 (App Router, TypeScript strict)        |
+| Database      | Neon PostgreSQL (serverless HTTP driver)          |
+| ORM           | Drizzle ORM                                       |
+| Styling       | Tailwind CSS v4                                   |
+| UI primitives | shadcn/ui                                         |
+| Charts        | Recharts                                          |
+| PWA           | Serwist (service worker, asset caching)           |
+| Tests         | Vitest + Testing Library (unit), Playwright (e2e) |
+| Hosting       | Vercel (auto-deploys `master` + PR previews)      |
+| Reverse proxy | Caddy (`tls internal`, Tailscale-gated)           |
 
 ---
 
@@ -36,43 +37,34 @@ Runs on a UGREEN NAS via Docker Compose, accessible over Tailscale only.
 
 ### Prerequisites
 
-- Docker + Docker Compose
-- Node.js 20+
+- Node.js 24+
+- A Neon PostgreSQL project (free tier works)
 
 ### Local development
 
 ```bash
 # 1. Copy env file and set credentials
 cp .env.example .env
-# Edit .env — set POSTGRES_PASSWORD at minimum
+# Edit .env — set DATABASE_URL, DATABASE_URL_UNPOOLED and PROXY_SECRET
 
-# 2. Start Postgres with the dev port override (exposes 127.0.0.1:5432)
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up db -d
-
-# 3. Apply database migrations
+# 2. Apply database migrations
 npm install
 npm run db:migrate
 
-# 4. Start the dev server
+# 3. Start the dev server
 npm run dev
 # → http://localhost:3000
 ```
 
 ### Environment variables
 
-| Variable            | Required | Description                                                              |
-| ------------------- | -------- | ------------------------------------------------------------------------ |
-| `POSTGRES_USER`     | Yes      | Postgres username (used by compose + backup)                             |
-| `POSTGRES_PASSWORD` | Yes      | Postgres password                                                        |
-| `POSTGRES_DB`       | No       | Database name (default: `petrol_mileage`)                                |
-| `DATABASE_URL`      | Yes      | Full connection string for the app and migration runner                  |
-| `BACKUP_DIR`        | No       | Host path for `.sql.gz` backup files                                     |
-| `PROXY_SECRET`      | Yes      | Shared secret checked by Next.js middleware; requests without it get 404 |
+| Variable                | Required | Description                                                              |
+| ----------------------- | -------- | ------------------------------------------------------------------------ |
+| `DATABASE_URL`          | Yes      | Neon pooled connection string, used by the app at runtime                |
+| `DATABASE_URL_UNPOOLED` | Yes      | Neon direct (unpooled) connection string, used by migrations/Drizzle Kit |
+| `PROXY_SECRET`          | Yes      | Shared secret checked by Next.js middleware; requests without it get 404 |
 
-`DATABASE_URL` format:
-
-- **Local dev** (host → Docker): `postgresql://petrol:<password>@localhost:5432/petrol_mileage`
-- **Production** (inside Docker): `postgresql://petrol:<password>@db:5432/petrol_mileage`
+Both URLs come from the Neon console (pooled vs direct endpoint of the same database).
 
 ---
 
@@ -81,7 +73,7 @@ npm run dev
 Schema: two tables, append-only fill-ups.
 
 ```
-vehicles  — id, name, make, model, year, plate, is_active
+vehicles  — id, name, make, model, year, plate, is_active, is_current
 fill_ups  — id, vehicle_id, pump_date, petrol_l, mileage_km, cost, voided_at, void_reason
 ```
 
@@ -99,28 +91,32 @@ npm run db:studio     # open Drizzle Studio (DB browser)
 ## Testing
 
 ```bash
-npm test              # run all unit tests once
-npm run test:watch    # watch mode
-npm run test:e2e      # run Playwright e2e tests (requires dev server)
+npm test               # run all unit tests once
+npm run test:watch     # watch mode
+npm run test:e2e       # Playwright e2e (builds a production bundle first via pretest hook)
+npm run test:e2e:ui    # Playwright UI mode
+npm run test:e2e:debug # Playwright debug mode
 ```
 
-Unit tests cover all stats math: KPI computation, anomaly detection (efficiency >2σ, price >15% above median), forecast bounds, rolling averages, and chart series grouping.
+Unit tests cover all stats math (KPI computation, anomaly detection — efficiency >2σ, price >15% above median — forecast bounds, rolling averages, chart series grouping) plus component tests with Testing Library for the dashboard tiles, fills table, void dialog, log form, import wizard, and navigation.
 
-E2E tests cover the dashboard, log entry, import, and navigation flows.
+E2E tests run against a production build (no dev server needed) with all server state mocked, covering the dashboard, log entry, import, and navigation flows. CI runs them in the official Playwright container.
 
 ---
 
-## Production deployment (NAS)
+## Production deployment (Vercel + Neon)
+
+Deployment is handled by Vercel's GitHub integration — pushes to `master` deploy to production and pull requests get preview deployments. CI (lint, format, types, unit tests, build, audit, e2e) runs separately on GitHub Actions.
+
+Set `DATABASE_URL`, `DATABASE_URL_UNPOOLED` and `PROXY_SECRET` in Vercel's environment variables.
+
+Migrations are run locally against the Neon direct endpoint:
 
 ```bash
-# On the NAS — no dev override, no host port for DB
-docker-compose up -d
-
-# Run migrations after first deploy or schema changes
-docker-compose exec app npm run db:migrate
+npm run db:migrate   # uses DATABASE_URL_UNPOOLED
 ```
 
-Caddy snippet for the reverse proxy:
+Caddy snippet for the reverse proxy (runs on the NAS, gated by Tailscale):
 
 ```
 import /path/to/docker/Caddyfile.snippet
@@ -132,14 +128,6 @@ The snippet proxies to the Vercel deployment and injects `X-Caddy-Auth` from `$C
 
 ### Backup & restore
 
-The `backup` sidecar runs automatically:
+Database backups are handled by Neon (history retention / point-in-time restore in the Neon console).
 
-- Immediate backup on container start
-- Daily at 03:00 SGT
-- Rolling retention: 10 most recent `.sql.gz` files
-
-To restore:
-
-```bash
-./scripts/restore.sh /path/to/backup.sql.gz
-```
+The previous self-hosted NAS stack (`docker-compose.yml`, `docker/`, `scripts/backup.sh`, `scripts/restore.sh`) is retained in the repo for reference but is no longer the deployment target.
