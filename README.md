@@ -62,7 +62,7 @@ npm run dev
 | ----------------------- | -------- | ------------------------------------------------------------------------ |
 | `DATABASE_URL`          | Yes      | Neon pooled connection string, used by the app at runtime                |
 | `DATABASE_URL_UNPOOLED` | Yes      | Neon direct (unpooled) connection string, used by migrations/Drizzle Kit |
-| `PROXY_SECRET`          | Yes      | Shared secret checked by Next.js middleware; requests without it get 404 |
+| `PROXY_SECRET`          | Yes      | Shared secret checked by Next.js proxy; requests without it get 404      |
 
 Both URLs come from the Neon console (pooled vs direct endpoint of the same database).
 
