@@ -10,7 +10,7 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0 && a.length === b.length;
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const secret = request.headers.get('x-caddy-auth') ?? '';
   const expected = process.env.PROXY_SECRET ?? '';
   if (!safeEqual(secret, expected)) {

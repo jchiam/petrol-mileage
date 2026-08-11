@@ -31,7 +31,7 @@ Copy `.env.example` to `.env`. Required at runtime:
 
 - `DATABASE_URL` — Neon PostgreSQL pooled URL (used by the app via `@neondatabase/serverless`)
 - `DATABASE_URL_UNPOOLED` — Neon direct URL (used by `db:migrate` and Drizzle Kit)
-- `PROXY_SECRET` — shared secret with Caddy reverse proxy; middleware returns 404 if header `x-caddy-auth` doesn't match
+- `PROXY_SECRET` — shared secret with Caddy reverse proxy; proxy handler returns 404 if header `x-caddy-auth` doesn't match
 
 ## Architecture
 
@@ -72,9 +72,9 @@ Handles `.xlsx` and `.csv` via ExcelJS. Fuzzy-matches column headers (aliases de
 
 `<Dashboard>` is a client component that holds all display state. It skips the initial stats fetch (data already in props via `skipInitialFetch` ref) and only re-fetches when the vehicle selector changes. Charts component is lazy-loaded (`next/dynamic`, `ssr: false`) because Recharts is browser-only.
 
-### Auth / middleware
+### Auth / proxy
 
-`src/middleware.ts` runs on every non-static request, checks `x-caddy-auth` header against `PROXY_SECRET` using a constant-time comparison. Returns 404 (not 401) on mismatch to avoid leaking existence.
+`src/proxy.ts` (Next 16 proxy convention, formerly middleware) runs on every non-static request, checks `x-caddy-auth` header against `PROXY_SECRET` using a constant-time comparison. Returns 404 (not 401) on mismatch to avoid leaking existence.
 
 ### PWA
 
