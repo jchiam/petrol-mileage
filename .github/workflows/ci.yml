@@ -10,9 +10,6 @@ jobs:
     name: Lint, test, build
     runs-on: ubuntu-latest
 
-    env:
-      PROXY_SECRET: ${{ secrets.PROXY_SECRET }}
-
     steps:
       - uses: actions/checkout@v6
 
@@ -39,7 +36,9 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost/ci' }}
+          # Neon client initialises at import time; a syntactically valid URL
+          # avoids a sync throw. No real DB is ever reached in CI.
+          DATABASE_URL: postgresql://ci:ci@localhost/ci
 
       - name: Dependency audit
         run: npm audit --audit-level=high
@@ -63,31 +62,17 @@ jobs:
         run: npm run build
         env:
           # Neon client initialises at import time; a syntactically valid URL
-          # avoids a sync throw. No real DB is used — all API calls are mocked.
-          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost/ci' }}
+          # avoids a sync throw. No real DB is used — all server state is mocked.
+          DATABASE_URL: postgresql://ci:ci@localhost/ci
 
       - name: E2E tests
         # Skip `npm run test:e2e` because its pretest hook re-runs `next build`.
+        # PROXY_SECRET only needs to match between Playwright's request header
+        # and the web server's env — any value works; not the real secret.
         run: npx playwright test
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost/ci' }}
-          PROXY_SECRET: ${{ secrets.PROXY_SECRET }}
+          DATABASE_URL: postgresql://ci:ci@localhost/ci
+          PROXY_SECRET: ci-e2e-secret
 
-  deploy:
-    name: Deploy to Vercel
-    needs: [ci, e2e]
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
-
-      - name: Deploy to Vercel
-        run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+# Deployment is handled by Vercel's GitHub integration (auto-deploys master
+# and PR previews) — no deploy job needed here.
