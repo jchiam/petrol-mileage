@@ -5,8 +5,13 @@
  */
 import { expect, test } from '@playwright/test';
 
+import { setupDashboardState, setupLogPageState } from '../helpers/routes';
+
 test.describe('navigation', () => {
   test('nav links render on every route', async ({ page }) => {
+    // Mock server-side state so / and /log never touch the real DB.
+    await setupDashboardState(page, { vehicles: [] });
+    await setupLogPageState(page, { currentVehicle: null });
     for (const path of ['/', '/log', '/admin/import']) {
       await page.goto(path);
       await expect(page.getByRole('link', { name: 'Dashboard', exact: true })).toBeVisible();
