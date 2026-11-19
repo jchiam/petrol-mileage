@@ -45,10 +45,12 @@ jobs:
 
   e2e:
     name: E2E tests
-    needs: ci
+    # Deliberately not `needs: ci` — this job installs and builds on its own,
+    # so running both in parallel roughly halves the wall time of a green run.
     runs-on: ubuntu-latest
-    # Pre-installed Chromium + system deps. Version must match @playwright/test
-    # in package.json — bump together.
+    # Pre-installed Chromium + system deps. The image tag MUST match the
+    # installed @playwright/test version — the assert step below fails loudly
+    # when a dependency bump moves one without the other.
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble
 
@@ -57,6 +59,15 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Assert Playwright image matches @playwright/test
+        shell: bash
+        run: |
+          installed=$(node -p "require('@playwright/test/package.json').version")
+          if [ "$installed" != "1.62.1" ]; then
+            echo "::error::@playwright/test is $installed but the e2e container image is v1.62.1 — bump the image tag in ci.yml"
+            exit 1
+          fi
 
       - name: Build
         run: npm run build
@@ -73,6 +84,15 @@ jobs:
         env:
           DATABASE_URL: postgresql://ci:ci@localhost/ci
           PROXY_SECRET: ci-e2e-secret
+
+      # Traces, screenshots and videos are kept only for failing tests
+      # (playwright.config.ts), so there is nothing to upload on a green run.
+      - uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: playwright-test-results
+          path: test-results/
+          retention-days: 14
 
 # Deployment is handled by Vercel's GitHub integration (auto-deploys master
 # and PR previews) — no deploy job needed here.
