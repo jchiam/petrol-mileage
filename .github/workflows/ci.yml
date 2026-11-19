@@ -52,7 +52,7 @@ jobs:
     # installed @playwright/test version — the assert step below fails loudly
     # when a dependency bump moves one without the other.
     container:
-      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      image: mcr.microsoft.com/playwright:v1.65.1-noble
 
     steps:
       - uses: actions/checkout@v6
@@ -64,8 +64,8 @@ jobs:
         shell: bash
         run: |
           installed=$(node -p "require('@playwright/test/package.json').version")
-          if [ "$installed" != "1.62.1" ]; then
-            echo "::error::@playwright/test is $installed but the e2e container image is v1.62.1 — bump the image tag in ci.yml"
+          if [ "$installed" != "1.65.1" ]; then
+            echo "::error::@playwright/test is $installed but the e2e container image is v1.65.1 — bump the image tag in ci.yml"
             exit 1
           fi
 
